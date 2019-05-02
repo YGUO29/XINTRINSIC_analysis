@@ -1,0 +1,30 @@
+function [I_var_mean,I_var_rel] = AnalysisStd(para,DataMat)
+
+V = zeros(para.nRep,para.nStim,para.width*para.height);
+for i = 1:para.nRep
+    mov = squeeze(DataMat(i,:,:,:,:));
+
+    img_base = squeeze(mean(mov(:,:,:,1:floor(para.fr*para.preStim)),4)); % first second: baseline
+    img_amp = squeeze(mean(mov(:,:,:,floor(para.fr*para.preStim)+1:floor(para.fr*para.preStim+ + para.fr*para.durStim)),4));
+    % figure,imshow(img_base,[])
+    % figure,imshow(img_amp,[])
+    img_relamp = (img_amp - img_base)./img_base;
+    V(i,:,:) = reshape(img_relamp,para.nStim,para.width*para.height);
+end
+
+I_var = std(V);
+I_var = reshape(squeeze(I_var),para.nStim,para.height,para.width);
+%% see variance map for each stimulus
+% for i = 11:20
+% figure,imagesc(squeeze(I_var(i,:,:))),axis image
+% end
+%% averaged variance across stimulus
+I_var_mean = mean(I_var,1);
+I_var_mean = squeeze(I_var_mean);
+figure,imagesc(I_var_mean),axis image, colorbar
+%% the relative variance (normalized by mean amplitude)
+I_var_rel = I_var_mean./squeeze(mean(img_relamp,1));
+figure, imagesc(I_var_rel,[0 1]),axis image, colorbar
+
+
+end
