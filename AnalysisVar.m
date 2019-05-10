@@ -1,5 +1,5 @@
 function [Var_rep_mean, Var_rep_rel, Var_stim_mean, Var_stim_rel] = AnalysisVar(para,DataMat)
-
+% DataMat = [rep, trial, height, width, frams]
 V = zeros(para.nRep,para.nStim,para.width*para.height);
 for i = 1:para.nRep
     mov = squeeze(DataMat(i,:,:,:,:));

@@ -1,7 +1,6 @@
 clear all
-% load('\\10.16.58.229\Test_Imaging\2018.11.T1 (Marmoset 132D, Xintrinsic)\M132D-190119-10\190119T114434_Blue_Koehler_Fluo_GFP_P1.mat')
-% load('\\10.16.58.229\Test_Imaging\2018.03 T2 (Marmoset 80Z, Xintrinsic, Green & Fluo)\M80Z-180724-13\180724T140401_Blue_Koehler_Fluo_GFP_P1.mat')
-MonkeyID = 5; % 1: 80Z; 2: 132D session 1; 3: 132D session 2;
+
+MonkeyID = 0; % 1: 80Z; 2: 132D session 1; 3: 132D session 2;
 
 if MonkeyID == 1 % 80Z
 load('\\FANTASIA-DS3617\Test_Imaging\2018.03 T2 (Marmoset 80Z, Xintrinsic, Green & Fluo)\M80Z-180724-13\180724T140401_Blue_Koehler_Fluo_GFP_P1.mat')
@@ -16,25 +15,43 @@ elseif MonkeyID == 4 % 132D 1st scrambled sound
 load('\\FANTASIA-DS3617\Test_Imaging\2018.11.T1 (Marmoset 132D, Xintrinsic)\M132D-190409-10\190409T133916_Blue_Koehler_Fluo_GFP_P1.mat')
 I = imread('\\FANTASIA-DS3617\Test_Imaging\2018.11.T1 (Marmoset 132D, Xintrinsic)\M132D-190409-10\190409T141027_Blue_Koehler_Fluo_GFP','tif');    
 elseif MonkeyID == 5
-load('\\FANTASIA-DS3617\Test_Imaging\2018.11.T1 (Marmoset 132D, Xintrinsic)\M132D-190119-10\190119T112530_Blue_Koehler_Fluo_GFP_P1.mat')
-I = imread('\\FANTASIA-DS3617\Test_Imaging\2018.11.T1 (Marmoset 132D, Xintrinsic)\M132D-190119-10\190119T132947_Blue_Koehler_Fluo_GFP','tif');        
+load('\\FANTASIA-DS3617\Test_Imaging\2018.11.T1 (Marmoset 132D, Xintrinsic)\M132D-190419-09\190419T105449_Blue_Koehler_Fluo_GFP_P1.mat')
+I = imread('\\FANTASIA-DS3617\Test_Imaging\2018.11.T1 (Marmoset 132D, Xintrinsic)\M132D-190419-09\190419T122732_Blue_Koehler_Fluo_GFP','tif');        
+else 
+        [file,path] = uigetfile('*.mat','Select a mat file to analyze','\\FANTASIA-DS3617\Test_Imaging\2018.11.T1 (Marmoset 132D, Xintrinsic)');
+        load(fullfile(path,file));
+        [~,nametemp,~,] = fileparts(file);
+        load(fullfile(path,[nametemp(1:end-3),'.mat']));
+        [file,path] = uigetfile('*.tif','Select a surface image','\\FANTASIA-DS3617\Test_Imaging\2018.11.T1 (Marmoset 132D, Xintrinsic)');
+        I = imread(fullfile(path,file));
 end
+
+%%
 I = double(imresize(I,1/16));
+para.nRep =     size(P.ProcDataMat,1);
+para.nStim =    size(P.ProcDataMat,2);
+para.height =   size(P.ProcDataMat,3);
+para.width =    size(P.ProcDataMat,4);
+para.nFrame =   size(P.ProcDataMat,5);
 
-para.nRep = size(P.ProcDataMat,1);
-para.nStim = size(P.ProcDataMat,2);
-para.height = size(P.ProcDataMat,3);
-para.width = size(P.ProcDataMat,4);
-para.nFrame = size(P.ProcDataMat,5);
+para.fr =       P.ProcFrameRate; 
+para.preStim =  S.TrlDurPreStim;
+para.durStim =  S.TrlDurStim;
+para.postStim = S.TrlDurPostStim;
+para.filename = file;
+para.pathname = path;
+DataMat =       P.ProcDataMat;
 
-%P.ProcDataMat dimensions: (rep, trial, x(75), y(120), time(5*5))
 
-para.fr = 5; 
-para.preStim = 1;
-para.durStim = 2;
-para.postStim = 2;
+%% View data
+opt.ampLimit =  0.3;
+opt.mode =      'allrep'; 
+opt.plotMode =  'combined';
+opt.trials =    1:length(para.nStim);
+opt.saveON =    1;
+
+ViewData(para,DataMat,opt)
 %%  Variance across reps 1
-DataMat = P.ProcDataMat;
 [Var_rep_mean, Var_rep_rel, Var_stim_mean, Var_stim_rel] = AnalysisVar(para,DataMat);
 %% Generate masks for pixel selection
 DataMat = P.ProcDataMat;
