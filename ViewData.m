@@ -9,24 +9,96 @@ if strcmp(opt.mode,'avgrep')
 % mode1: selected trials, averaged reps, images + videos
 
     nTrials = length(opt.trials);
+    img_rel = zeros(nTrials,para.height,para.width);
+    mov_rel = zeros(nTrials,para.height,para.width,para.nFrame);
+    
     [p,n] = numSubplots(nTrials);
-    figure,
+
     for i = 1:nTrials
-        iTrial = trials(i);
+        iTrial = opt.trials(i);
         mov = DataMat(:,iTrial,:,:,:);
         % average across reps
         mov_mean = squeeze(mean(mov,1));
         % calculate deltaF/F (movie)
         img_base = squeeze(mean(mov_mean(:,:,1:floor(para.fr*para.preStim)),3)); % pre-stimulus: baseline        
         img_base = repmat(img_base,1,1,para.nFrame);
-        mov_rel = (mov_mean - img_base)./img_base;
+        mov_rel(i,:,:,:) = (mov_mean - img_base)./img_base;
         % calculate deltaF/F (averaged image)
-        img_rel = squeeze(mean(mov_rel(:,:,floor(para.fr*para.preStim)+1 : floor(para.fr*(para.preStim + para.durStim))),3));
+        img_rel(i,:,:) = squeeze(mean(mov_rel(i,:,:,floor(para.fr*para.preStim)+1 : floor(para.fr*(para.preStim + para.durStim))),4));  
+%         subplot(p(1),p(2),i)
+%         imagesc(img_rel,opt.ampLimit)
+%         axis image
+%         colorbar
+    end
 
-        subplot(p(1),p(2),i)
-        imagesc(img_rel,[0,opt.ampLimit])
-        axis image
-        colorbar
+    if opt.saveON
+        fnametemp = para.filename;
+        vnametemp = [para.pathname, para.filename(1:end-4), '_trial', num2str(iTrial),'.avi'];
+        [file,path] = uigetfile('*.wav','Select the sound file','\\FANTASIA-DS3617\Test_Imaging\=Sounds=');
+        [sounddata,fs] = audioread(fullfile(path,file)); 
+        videoFWriter = vision.VideoFileWriter(vnametemp,...
+        'FileFormat',       'AVI',...
+        'AudioInputPort',   true,...
+        'FrameRate',        para.fr,...
+        'VideoCompressor',	'None (uncompressed)',...
+        'AudioDataType',    'int16');
+        SoundBatchSampleNum =   round(fs/para.fr);
+        SoundSeq =              sounddata;
+    end
+    
+    
+    [p,n] = numSubplots(nTrials);
+
+  % construct a combined matrix for mean images
+    img_rel = permute(img_rel,[2,3,1]);
+    if nTrials < n % pad with 0 if one block is left empty
+        img_rel(:,:,nTrials+1:n) = zeros(para.height,para.width,n-nTrials);
+    end
+     img_all = [];    
+    for k = 1:p(1)
+        img_all = [img_all;reshape(img_rel(:,:,p(2)*(k-1)+1:p(2)*k),para.height,para.width*p(2))];
+    end
+    
+    figure,
+    h = imagesc(img_all,opt.ampLimit); colormap('jet'); colorbar; axis image
+    pause
+    for i = 1:para.nFrame
+        mov_temp = mov_rel(:,:,:,i);
+        % construct a combined matrix for each frame
+        mov_temp = permute(mov_temp,[2,3,1]);
+        if nTrials < n % pad with 0 if one block is left empty
+            mov_temp(:,:,nTrials:n) = zeros(para.height,para.width,n-nTrials);
+        end
+        mov_all = [];
+        for k = 1:p(1)
+            mov_all = [mov_all;reshape(mov_temp(:,:,p(2)*(k-1)+1:p(2)*k),para.height,para.width*p(2))];
+        end
+
+        set(h,'CData',mov_all)
+        title(['time = ',num2str(i*0.2,'%-5.1f')])
+%         pause(1/para.fr)
+        pause
+        if opt.saveON    
+            % save video and audio
+            MAX =           opt.ampLimit(2);
+            MIN =           min(min(mov_all));
+            mov_all =       (2^8-1).*(mov_all - MIN)./(MAX - MIN);
+            mov_all =       uint8(mov_all);
+            frame =         repmat(mov_all,1,1,3);
+            frame(:,:,1) =  mov_all*0;
+            frame(:,:,3) =  mov_all*0;
+            if i*SoundBatchSampleNum > length(SoundSeq)
+                videoFWriter(frame,SoundSeq((i-1)*SoundBatchSampleNum+1:end) );
+            elseif (i-1)*SoundBatchSampleNum+1 > length(SoundSeq)
+                videoFWriter(frame);
+            else            
+                videoFWriter(frame,SoundSeq((i-1)*SoundBatchSampleNum+1:i*SoundBatchSampleNum) );
+            end
+            end
+    end
+    set(h,'CData',img_all)
+    if opt.saveON
+        release(videoFWriter) 
     end
 
 %%    
@@ -63,7 +135,7 @@ elseif strcmp(opt.mode,'allrep')
     % for saving through VideoFWriter System object (2015/08/17)
     if opt.saveON    
         fnametemp = para.filename;
-        vnametemp = [para.pathname, para.filename(1:end-4), '.avi'];
+        vnametemp = [para.pathname, para.filename(1:end-4), '_trial', num2str(iTrial),'.avi'];
         [file,path] = uigetfile('*.wav','Select the sound file','\\FANTASIA-DS3617\Test_Imaging\=Sounds=');
         [sounddata,fs] = audioread(fullfile(path,file)); 
         videoFWriter = vision.VideoFileWriter(vnametemp,...
@@ -89,7 +161,7 @@ elseif strcmp(opt.mode,'allrep')
         end
 
         figure,
-        h = imagesc(img_all,[0,opt.ampLimit]); colorbar; axis image
+        h = imagesc(img_all,opt.ampLimit); colorbar; axis image
         pause
         for i = 1:para.nFrame
             mov_temp = mov_rel(:,:,:,i);
@@ -105,19 +177,29 @@ elseif strcmp(opt.mode,'allrep')
 
             set(h,'CData',mov_all)
             title(['time = ',num2str(i*0.2,'%-5.1f')])
-            pause(0.2)
-            
-            % save video and audio
-            MAX =           opt.ampLimit;
-            MIN =           min(min(mov_all));
-            mov_all =       (2^8-1).*(mov_all - MIN)./(MAX - MIN);
-            frame =         repmat(mov_all,3,1);
-            frame(:,:,1) =  mov_all*0;
-            frame(:,:,3) =  mov_all*0;
-            Filename =      videoFWriter(frame,SoundSeq((i-1)*SoundBatchSampleNum+1:i*SoundBatchSampleNum) );
+            pause(1/para.fr)
+            if opt.saveON    
+                % save video and audio
+                MAX =           opt.ampLimit(2);
+                MIN =           min(min(mov_all));
+                mov_all =       (2^8-1).*(mov_all - MIN)./(MAX - MIN);
+                mov_all =       uint8(mov_all);
+                frame =         repmat(mov_all,1,1,3);
+                frame(:,:,1) =  mov_all*0;
+                frame(:,:,3) =  mov_all*0;
+                if i*SoundBatchSampleNum > length(SoundSeq)
+                    videoFWriter(frame,SoundSeq((i-1)*SoundBatchSampleNum+1:end) );
+                elseif (i-1)*SoundBatchSampleNum+1 > length(SoundSeq)
+                    videoFWriter(frame);
+                else            
+                    videoFWriter(frame,SoundSeq((i-1)*SoundBatchSampleNum+1:i*SoundBatchSampleNum) );
+                end
+                end
         end
         set(h,'CData',img_all)
-        release(videoFWriter)
+        if opt.saveON; 
+            release(videoFWriter) 
+        end
     end
 
     if strcmp(opt.plotMode,'separate')
@@ -127,7 +209,7 @@ elseif strcmp(opt.mode,'allrep')
         for iRep = 1:para.nRep+1
             temp = squeeze(mov_rel(iRep,:,:,:));
             subplot(p(1),p(2),iRep); 
-            h(iRep) = imagesc(temp(:,:,1),[0,opt.ampLimit]);colorbar;
+            h(iRep) = imagesc(temp(:,:,1),opt.ampLimit);colorbar;
             axis image
             if iRep == paara.nRep+1
                 title('Averaged across reps')
@@ -140,7 +222,7 @@ elseif strcmp(opt.mode,'allrep')
             for iRep = 1:para.nRep+1
             set(h(iRep),'CData',squeeze(mov_rel(iRep,:,:,i)))
             end
-            pause(0.2)
+            pause(1/para.fr)
         end
     end
     

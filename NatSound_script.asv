@@ -1,6 +1,6 @@
 clear all
 
-MonkeyID = 2; % 1: 80Z; 2: 132D session 1; 3: 132D session 2;
+MonkeyID = 0; % 1: 80Z; 2: 132D session 1; 3: 132D session 2;
 
 if MonkeyID == 1 % 80Z
 file_mat = '180724T140401_Blue_Koehler_Fluo_GFP_P1.mat';
@@ -63,20 +63,14 @@ para.filename = file_mat;
 para.pathname = path_mat;
 DataMat =       P.ProcDataMat;
 
-%% select trials to view (temp)
-folder_sound = 'D:\=code=\McdermottLab\sound_natural\';
-list = dir(fullfile(folder_sound,'*.wav'));
-names_sound = natsortfiles({list.name})';
+%% 
 folder_sound = '\\FANTASIA-DS3617\Test_Imaging\=Sounds=\Natural_XINTRINSIC';
 list = dir(fullfile(folder_sound,'*.wav'));
-names_sound2 = natsortfiles({list.name})';
-opt.trials = [];
-for i = 1:length(names_sound2)-1
-    opt.trials(i) = find(strcmp(names_sound2(i+1),names_sound));
-end
+names_sound = natsortfiles({list.name})';
+for i = 1:leng
 
 %% View data
-opt.ampLimit =  [-0.1 0.1];
+opt.ampLimit =  [-0.25 0];
 opt.mode =      'avgrep'; % avgrep or allrep
 opt.plotMode =  'combined';
 % opt.trials =    1:para.nStim;
@@ -143,16 +137,14 @@ comp = cell(1,K);
 I_norm = (I - min(min(I)))./(max(max(I)) - min(min(I)));
 
 figure,
-[p,n] = numSubplots(K);
-cutoff = 0.1;
 for i = 1:K
     comp{i} = reshape(W(i,:),para.height,para.width);
-%     subplot(p(1),p(2),i),imagesc(comp{i},cutoff.*[-1 1]),axis image
-    mask = comp{i}; mask(mask > cutoff) = cutoff; mask(mask < - cutoff) = - cutoff;
+%     subplot(3,3,i),imagesc(comp{i},0.15.*[-1 1]),axis image
+    mask = comp{i}; mask(mask > 0.15) = 0.15; mask(mask < -0.15) = -0.15;
     mask = mask.*8; 
     img = repmat(I_norm,1,1,3); % three layers, representing R,G,B 
     img(:,:,1) = img(:,:,1) + mask;
-    subplot(p(1),p(2),i),imagesc(img),axis image
+    subplot(3,3,i),imagesc(img),axis image
 end
 
 %% analyze response amplitude for components
