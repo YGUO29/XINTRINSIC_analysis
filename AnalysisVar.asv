@@ -39,8 +39,8 @@ Var_frame = zeros(para.nStim,para.height,para.width);
 Mean_frame = zeros(para.nStim,para.height,para.width);
 Base_frame = zeros(para.nStim,para.height,para.width);
 %%
-for i = 1:para.nStim
-% for i = 1:10
+% for i = 1:para.nStim
+for i = 1:10
     mov_temp = mean(squeeze(DataMat(:,i,:,:,:)),1); % 1 x height x width x frames
     mov_temp = squeeze(mov_temp); % height x width x frames
     img_base = squeeze(mean(mov_temp(:,:,1:floor(para.fr*para.preStim)),3));

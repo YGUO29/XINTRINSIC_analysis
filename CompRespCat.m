@@ -4,7 +4,7 @@ function [I_inorder, R_inorder, tags_inorder, snames_inorder] = CompRespCat(R,pl
 folder_origin = 'D:\=code=\McdermottLab\sound_natural';
 % list = dir(fullfile(folder_origin,'*.wav'));
 % Names = natsortfiles({list.name})';
-[tags,snames] = xlsread([folder_origin,'\NatSound_label'],1);
+[tags,snames] = xlsread([folder_origin,'\NatSound_label'],2);
 nTags = max(tags);
 Color = zeros(nTags,3);
 % set colors
@@ -18,6 +18,7 @@ Color(7,:) = [202 51  32 ]./255;
 Color(8,:) = [255 103 132]./255;
 Color(9,:) = [119 119 119]./255;
 Color(10,:) = [255 139 24]./255;
+Color(11,:) = [255 255 0]./255;
 
 %% bar plot figure
 [R_inorder,I_inorder] = sort(R,'descend');

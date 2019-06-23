@@ -1,6 +1,6 @@
 clear all
 
-MonkeyID = 2; % 1: 80Z; 2: 132D session 1; 3: 132D session 2;
+MonkeyID = 1; % 1: 80Z; 2: 132D session11; 3: 132D session2; 4: 132D 1st Scrambled; 6: 132D 2nd Scrambled
 
 if MonkeyID == 1 % 80Z
 file_mat = '180724T140401_Blue_Koehler_Fluo_GFP_P1.mat';
@@ -33,21 +33,21 @@ elseif MonkeyID == 4 % 132D 1st scrambled sound
 load('\\FANTASIA-DS3617\Test_Imaging\2018.11.T1 (Marmoset 132D, Xintrinsic)\M132D-190409-10\190409T133916_Blue_Koehler_Fluo_GFP_P1.mat')
 load('\\FANTASIA-DS3617\Test_Imaging\2018.11.T1 (Marmoset 132D, Xintrinsic)\M132D-190409-10\190409T133916_Blue_Koehler_Fluo_GFP.mat')
 I = imread('\\FANTASIA-DS3617\Test_Imaging\2018.11.T1 (Marmoset 132D, Xintrinsic)\M132D-190409-10\190409T141027_Blue_Koehler_Fluo_GFP','tif');    
-elseif MonkeyID == 5
+elseif MonkeyID == 5 % 132D 2nd scrambled sound
 load('\\FANTASIA-DS3617\Test_Imaging\2018.11.T1 (Marmoset 132D, Xintrinsic)\M132D-190419-09\190419T105449_Blue_Koehler_Fluo_GFP_P1.mat')
 load('\\FANTASIA-DS3617\Test_Imaging\2018.11.T1 (Marmoset 132D, Xintrinsic)\M132D-190419-09\190419T105449_Blue_Koehler_Fluo_GFP.mat')
 I = imread('\\FANTASIA-DS3617\Test_Imaging\2018.11.T1 (Marmoset 132D, Xintrinsic)\M132D-190419-09\190419T122732_Blue_Koehler_Fluo_GFP','tif');        
-else 
+else % browse to open a file
         [file_mat,path_mat] = uigetfile('*.mat','Select a mat file to analyze','\\FANTASIA-DS3617\Test_Imaging\2018.11.T1 (Marmoset 132D, Xintrinsic)');
         load(fullfile(path_mat,file_mat));clc
         [~,nametemp,~,] = fileparts(file_mat);
-        load(fullfile(path_mat,[nametemp(1:36),'.mat']));
+        load(fullfile(path_mat,[nametemp(1:35),'.mat']));
         [file_tif,path_tif] = uigetfile('*.tif','Select a surface image','\\FANTASIA-DS3617\Test_Imaging\2018.11.T1 (Marmoset 132D, Xintrinsic)');
         I = imread(fullfile(path_tif,file_tif));
 end
 
 %%
-I = double(imresize(I,1/16));
+% I = double(imresize(I,1/16));
 para.nRep =     size(P.ProcDataMat,1);
 para.nStim =    size(P.ProcDataMat,2);
 para.height =   size(P.ProcDataMat,3);
@@ -55,39 +55,47 @@ para.width =    size(P.ProcDataMat,4);
 para.nFrame =   size(P.ProcDataMat,5);
 
 
-para.fr =       P.ProcFrameRate; 
+para.fr =       P.ProcFrameRate; % frame rate
 para.preStim =  S.TrlDurPreStim;
 para.durStim =  S.TrlDurStim;
 para.postStim = S.TrlDurPostStim;
 para.filename = file_mat;
 para.pathname = path_mat;
 DataMat =       P.ProcDataMat;
-
-%% select trials to view (temp)
+I = double(imresize(I,[para.height,para.width]));
+clear S P
+%% select trials to compare Calcium and intrinsic imaging (temp)
+% the entire set of natural sounds
 folder_sound = 'D:\=code=\McdermottLab\sound_natural\';
 list = dir(fullfile(folder_sound,'*.wav'));
 names_sound = natsortfiles({list.name})';
-folder_sound = '\\FANTASIA-DS3617\Test_Imaging\=Sounds=\Natural_XINTRINSIC';
+% the subset of natural sounds for intrinsic imaging
+folder_sound = '\\FANTASIA-DS3617\Test_Imaging\=Sounds=\Natural_XINTRINSIC2';
 list = dir(fullfile(folder_sound,'*.wav'));
 names_sound2 = natsortfiles({list.name})';
+% pick out trials for the selected natural sounds
 opt.trials = [];
 for i = 1:length(names_sound2)-1
     opt.trials(i) = find(strcmp(names_sound2(i+1),names_sound));
 end
 
 %% View data
-opt.ampLimit =  [-0.1 0.1];
-opt.mode =      'avgrep'; % avgrep or allrep
-opt.plotMode =  'combined';
-% opt.trials =    1:para.nStim;
-opt.trials =    1:36;
-opt.saveON =    0;
+opt.ampLimit    =  [0 0.30];
+opt.mode        =  'avgrep'; % avgrep or allrep
+opt.plotMode    =  'separate'; % combined or separate (video saving is only available for 'combined' mode)
+% opt.trials =    44+[1:12,23:28]; 
+opt.trials      = 1:5;
+opt.saveON      = 0;
+opt.soundON     = 0;
+opt.reps        = 1:5;
+opt.tWindow     = []; % start and end of integration window for calculating response amplitude
 
 ViewData(para,DataMat,opt)
 %%  Variance across reps 1
-opt.plotON =    1;
-opt.ampLimit =  0.1;
-[Var] =         AnalysisVar(para,DataMat,opt);
+opt.plotON      = 1;
+opt.ampLimit    = 0.1;
+opt.tWindow     = [3.5 5];
+[Var]           = AnalysisVar(para,DataMat,opt);
 %% Generate masks for pixel selection
 DataMat = P.ProcDataMat;
 p_th = 0.0005; r_th = 0.3; c_th = 0.3;
@@ -98,6 +106,7 @@ mask_final = mask_corr.*mask_sig;
 
 %% Manually drawn circular mask
 figure, imshow(I,[])
+% h = images.roi.Ellipse(gca,'Center',[floor(para.width/2) floor(para.height/2)],'Semiaxes',[40 20]); 
 h = images.roi.Circle(gca,'Center',[floor(para.width/2) floor(para.height/2)],'Radius',40); 
 mask_final = createMask(h);
 
@@ -115,14 +124,15 @@ SoundName =                         natsortfiles({list.name})';
 [~,Rank_var] =                      sort(I_var);
 [~,Rank_relvar] =                   sort(I_relvar);
 
-SoundName_inorder =                 SoundName(I_relvar);
+SoundName_inorder =                 SoundName(I_mean);
 
 
 %% ============ construct a matrix for ICA analysis ===================
 X = zeros(para.nStim,para.width*para.height);
+reps = 1:para.nRep;
 for i = 1:para.nStim
-    mov = P.ProcDataMat(:,i,:,:,:);
-    mov_mean = squeeze(mean(mov,1));
+    mov = P.ProcDataMat(reps,i,:,:,:);
+    mov_mean = squeeze(mean(mov,1)); % height x width x frames
 
     img_base = squeeze(mean(mov_mean(:,:,1:floor(para.fr*para.preStim)),3)); % first second: baseline
     img_amp = squeeze(mean(mov_mean(:,:,floor(para.fr*para.preStim)+1:floor(para.fr*para.preStim+ + para.fr*para.durStim)),3));
@@ -133,11 +143,11 @@ end
 
 %% perform ICA analysis
 addpath('D:\=code=\McdermottLab\toolbox_nonparametric-ICA')
-K = 6;
+K = 14;
 
 RANDOM_INITS = 10;
 PLOT_FIGURES = 0;
-tic,[R, W] = nonparametric_ica(-X, K, RANDOM_INITS, PLOT_FIGURES);toc
+tic,[R, W] = nonparametric_ica(X, K, RANDOM_INITS, PLOT_FIGURES);toc
 
 comp = cell(1,K);
 I_norm = (I - min(min(I)))./(max(max(I)) - min(min(I)));
@@ -147,7 +157,7 @@ figure,
 cutoff = 0.1;
 for i = 1:K
     comp{i} = reshape(W(i,:),para.height,para.width);
-%     subplot(p(1),p(2),i),imagesc(comp{i},cutoff.*[-1 1]),axis image
+%     subplot(p(1),p(2),i),imagesc(comp{i},cutoff.*[-1 1]),axis image, colorbar
     mask = comp{i}; mask(mask > cutoff) = cutoff; mask(mask < - cutoff) = - cutoff;
     mask = mask.*8; 
     img = repmat(I_norm,1,1,3); % three layers, representing R,G,B 
@@ -176,6 +186,7 @@ V1 = squeeze(V(1,:,:));
 V2 = squeeze(V(2,:,:)); 
 
 rho = zeros(para.width*para.height,1);
+rho_norm = rho;
 for i = 1:para.height*para.width
     v1 = V1(:,i); v2 = V2(:,i);
     v_proj1 = R*pinv(R)*v1;
@@ -183,11 +194,13 @@ for i = 1:para.height*para.width
     rho1 = corr(v_proj1, v2);
     rho2 = corr(v_proj2, v1);
     rho(i) = tanh(0.5*(atanh(rho1)+atanh(rho2)));
-%     rho(i) = rho(i)/sqrt(corr(v1,v2)*corr(v_proj1,v_proj2));
-%     rho(i) = abs(rho(i)).^2;
+    
+    rho_norm(i) = rho(i)/sqrt(corr(v1,v2)*corr(v_proj1,v_proj2));
+    rho_norm(i) = abs(rho_norm(i)).^2;
 %     rho(i) = corr(v_proj1,v_proj2).^2;
 end
-median(rho)
+result(1) = median(rho);
+result(2) = median(rho_norm)
 
 %% Tonotopic map analysis
 X1 = X(1:7,:);
