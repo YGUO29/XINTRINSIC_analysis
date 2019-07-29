@@ -1,5 +1,5 @@
-function [Mean, Var] = GetStats(para,DataMat,mask_final)
-
+function [Mean, Var] = getStats(para,DataMat,mask_final)
+% get mean and variance for the entire masked area
 Mean =  zeros(para.nStim,1);
 Var =   zeros(para.nStim,1);
 for iTrial = 1:para.nStim

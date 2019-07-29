@@ -92,7 +92,7 @@ switch opt.plotMode
     end
 
     % arrange subplots 
-    [p,n] = numSubplots(nPanels);
+    [p,n] = numSubplots(nPanels); 
     % construct a combined matrix for mean images
     img_rel = permute(img_rel,[2,3,1]); % height x width x trials
     if nPanels < n % pad with 0 if one block is left empty
@@ -155,7 +155,17 @@ switch opt.plotMode
         frame =         repmat(img_all,1,1,3);
         frame(:,:,1) =  img_all*0;
         frame(:,:,3) =  img_all*0;
-        videoFWriter(frame);
+        if opt.soundON
+            if i*SoundBatchSampleNum > length(SoundSeq) % if end of current frame is longer than sound (by <1 segment)
+                videoFWriter(frame,SoundSeq((i-1)*SoundBatchSampleNum+1:end) );
+            elseif (i-1)*SoundBatchSampleNum+1 > length(SoundSeq) % if 
+                videoFWriter(frame);
+            else            
+                videoFWriter(frame,SoundSeq((i-1)*SoundBatchSampleNum+1:i*SoundBatchSampleNum) );
+            end
+        else
+            videoFWriter(frame);
+        end
         release(videoFWriter) 
     end
  %% plot separately, cannot save videos
@@ -192,7 +202,7 @@ switch opt.plotMode
             subplot(p(1),p(2),iTrial); 
             h(iTrial) = imagesc(temp(:,:,1),opt.ampLimit);colorbar;
             axis image
-            title(['Rep.Num.',num2str( opt.trials(iTrial) )])
+            title(['Trial.Num.',num2str( opt.trials(iTrial) )])
         end
         pause
         for i = 1:para.nFrame
