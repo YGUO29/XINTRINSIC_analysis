@@ -84,7 +84,7 @@ opt.ampLimit    =  [0 0.3];
 opt.mode        =  'avgrep'; % avgrep or allrep
 opt.plotMode    =  'separate'; % combined or separate (video saving is only available for 'combined' mode)
 % opt.trials =    44+[1:12,23:28]; 
-opt.trials      = 165-11:165;
+opt.trials      = [1 4 7];
 opt.saveON      = 0; 
 opt.soundON     = 0;
 opt.reps        = [];
@@ -171,14 +171,15 @@ I_norm = (I - min(min(I)))./(max(max(I)) - min(min(I)));
 figure,
 [p,n] = numSubplots(K);
 cutoff = 0.1;
-for i = 1:K
+for i = 1:1
     comp{i} = reshape(W(i,:),para.height,para.width);
 %     subplot(p(1),p(2),i),imagesc(comp{i},cutoff.*[-1 1]),axis image, colorbar
     mask = comp{i}; mask(mask > cutoff) = cutoff; mask(mask < - cutoff) = - cutoff;
     mask = mask.*8; 
     img = repmat(I_norm,1,1,3); % three layers, representing R,G,B 
     img(:,:,1) = img(:,:,1) + mask;
-    subplot(p(1),p(2),i),imagesc(img),axis image
+%     subplot(p(1),p(2),i),
+    imagesc(img),axis image
 end
 
 %% analyze response amplitude for components
