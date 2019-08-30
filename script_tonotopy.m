@@ -40,7 +40,7 @@
 %%
 clear all
 
-MonkeyID = 3; % 1: 80Z; 2: 132D session11; 3: 132D session2; 4: 132D 1st Scrambled; 6: 132D 2nd Scrambled
+MonkeyID = 0; % 1: 80Z; 2: 132D session11; 3: 132D session2; 4: 132D 1st Scrambled; 6: 132D 2nd Scrambled
 
 switch MonkeyID 
     case 1 % 80Z
@@ -49,7 +49,7 @@ switch MonkeyID
     path_mat = '\\FANTASIA-DS3617\Test_Imaging\2018.03 T2 (Marmoset 80Z, Xintrinsic, Green & Fluo)\M80Z-180724-13\';
     load(fullfile(path_mat,file_mat));
     [~,nametemp,~,] = fileparts(file_mat);
-    load(fullfile(path_mat,[nametemp(1:35),'.mat']));
+    load(fullfile(path_mat,[nametemp(1:end-3),'.mat']));
     I = imread(fullfile(path_mat,file_tif));
     
     case 2 % 132D, session 1, up
@@ -70,10 +70,10 @@ switch MonkeyID
     load(fullfile(path_mat,[nametemp(1:end-3),'.mat']));
     I = imread(fullfile(path_mat,file_tif));
     
-    case 4 % 132D, session 2    
-    file_mat = '190224T110724_Blue_Koehler_Fluo_GFP_P1.mat';
-    file_tif = '190224T121936_Blue_Koehler_Fluo_GFP.tif';
-    path_mat = '\\FANTASIA-DS3617\Test_Imaging\2018.11.T1 (Marmoset 132D, Xintrinsic)\M132D-190224-09\';
+    case 4 % 96B
+    file_mat = '190806T151151_Green_Koehler_Pola_PBS_P1.mat';
+    file_tif = '190806T133610_Green_Koehler_Pola_PBS.tif';
+    path_mat = '\\FANTASIA-DS3617\Test_Imaging\2018.12.T1 (Marmoset 96B, Xintrinsic)\M96B-190806-13';
     load(fullfile(path_mat,file_mat));
     [~,nametemp,~,] = fileparts(file_mat);
     load(fullfile(path_mat,[nametemp(1:end-3),'.mat']));
@@ -83,7 +83,7 @@ switch MonkeyID
         [file_mat,path_mat] = uigetfile('*.mat','Select a mat file to analyze','\\FANTASIA-DS3617\Test_Imaging\2018.11.T1 (Marmoset 132D, Xintrinsic)');
         load(fullfile(path_mat,file_mat));clc
         [~,nametemp,~,] = fileparts(file_mat);
-        load(fullfile(path_mat,[nametemp(1:35),'.mat']));
+        load(fullfile(path_mat,[nametemp(1:end-3),'.mat']));
         [file_tif,path_tif] = uigetfile('*.tif','Select a surface image','\\FANTASIA-DS3617\Test_Imaging\2018.11.T1 (Marmoset 132D, Xintrinsic)');
         I = imread(fullfile(path_tif,file_tif));
 end
@@ -114,10 +114,26 @@ clear S P
 %% for 80Z, trial-based tonotopy analysis
 iStim = [1,4,7];
 data_temp       = squeeze(DataMat);
-
+%% View data
+opt.ampLimit    = [-0.1, 0.1];
+opt.saveON      = 0; 
+opt.soundON     = 0;
+ViewData_raw(DataMat, para, opt);
 %% cycle-based tonotopy analysis
-data_temp       = squeeze(DataMat);
-data_temp       = permute(data_temp,[4 1 2 3]);
+
+% ===== select frequency component to analysis =====
+% period          = S.tm_period; 
+period          = para.preStim + para.durStim + para.postStim;
+rep             = para.nRep;
+% ==================================================
+
+% change the polarity here!!
+data_temp       = - squeeze(DataMat);
+if para.nRep == 1
+    data_temp   = permute(data_temp,[3 1 2]);
+else
+    data_temp   = permute(data_temp,[4 1 2 3]);
+end
 nPix            = para.height*para.width;
 data_temp       = reshape(data_temp,[para.nRep*para.nFrame, para.height*para.width]);
 
@@ -125,37 +141,74 @@ data_temp       = reshape(data_temp,[para.nRep*para.nFrame, para.height*para.wid
 L               = floor(para.fr * para.nRep * (para.preStim + para.durStim + para.postStim)); %length of signal
 T               = 1/para.fr; % sampling period
 t               = (0:L-1)*T;
-% data_temp_mean  = squeeze(mean(data_temp,[2,3]));
-% data_fft_mean   = fft(data_temp_mean);
-% data_fftamp_mean            = abs( data_fft_mean/L );
-% data_fftamp_mean            = data_fftamp_mean(1:L/2+1);
-% data_fftamp_mean(2:end-1)   = 2*data_fftamp_mean(2:end-1);
-% data_fftamp_mean            = data_fftamp_mean./data_fftamp_mean(1); % normali zed to mean amplitude
-% f                           = para.fr*(0:(L/2))/L;
-% figure,plot(f(2:end),data_fftamp_mean(2:end))
 
+% ========== plot average temporal trace ========== 
+data_temp_mean  = mean(data_temp,2);
+Max             = max(data_temp_mean) + 3*std(data_temp_mean);
+Min             = 2*mean(data_temp_mean) - Max; 
+% data_temp_mean  = data_temp(: , sub2ind([para.height, para.width],40,61));
+ind             = para.fr.*[period: period: floor(period.*rep)];
+ind             = [1,ind];
 
+fig = figure; size_scr = get(0,'ScreenSize'); set(gcf,'position',[1 1 size_scr(3:4)])
+subplot(2,3,1:3)
+hold on
+for i = 1:length(ind)-1
+    if mod(i,2)
+        plot( t(ind(i):ind(i+1)), data_temp_mean(ind(i):ind(i+1)), 'k');
+    else
+        plot( t(ind(i):ind(i+1)), data_temp_mean(ind(i):ind(i+1)), 'r');
+    end
+end
+set(gca,'XTick', period: period: floor(period.*rep))
+% set(gca,'XTick', unique(sort([S.fm_period:S.fm_period:para.durStim, S.tm_period:S.tm_period:para.durStim])) )
+% plot(1/para.fr:1/para.fr:para.durStim,  data_temp_mean);
+grid on
+% =================================================
+
+if mod(L,2)
+    data_temp   = [data_temp;zeros(1,nPix)];
+    L = L +1;
+end
 data_fft                    = fft(data_temp, L, 1);
 data_fftamp_mat             = abs( data_fft/L );
 data_fftamp_mat             = data_fftamp_mat(1:L/2+1,:);
 data_fftamp_mat(2:end-1,:,:)= 2*data_fftamp_mat(2:end-1,:);
 data_fftamp_mat             = data_fftamp_mat./repmat(data_fftamp_mat(1,:),[L/2+1,1]); % normali zed to mean amplitude
-% data_fftagl_mat             = angle(data_fft')';
+data_fftamp_mean            = mean(data_fftamp_mat,2);
+f                           = para.fr*(0:(L/2))/L;
 
+% ========== plot average spectrum ==========
+    subplot(2,4,5)
+    semilogx(f(2:end),data_fftamp_mean(2:end)), xlim([0 1])
+    % label fm and tm periods
+%     ind_fm = floor(interp1(f,1:length(f),1/S.fm_period));
+    ind = floor(interp1(f,1:length(f),1/period));
+    hold on, scatter(f(ind), data_fftamp_mean(ind))
+    title('Averaged spectrum')
+    % figure, plot(f(2:end),data_fftamp_mat(2:end, sub2ind([para.height, para.width],52, 50))
+% ===========================================
+
+freq_comp = floor(interp1(f,1:length(f),1/period));
+% data_fftagl_mat             = angle(data_fft')';
 data_fftagl_mat             = mod( angle(data_fft')', 2*pi );
 % data_fftagl_mat             = angle(data_fft(1:L/2+1,:,:));
 % data_fftagl_mat             = data_fftagl_mat + pi.*ones(size(data_fftagl_mat));
 
 
 % take the corresponding frequency component
-freq_comp = 21; % the 20th point, 0.05Hz (20s period)
 data_fftamp_one = squeeze(data_fftamp_mat(freq_comp,:));
 data_fftagl_one = squeeze(data_fftagl_mat(freq_comp,:));
 % data_fftamp_one = reshape(data_fftamp_one, nPix, 1);
 % data_fftagl_one = reshape(data_fftagl_one, nPix, 1);
+% ========== plot phase ====================
+    subplot(2,4,6) 
+    hist(data_fftagl_one./pi,100);
+    title('Phase distribution (uncompensated)')
+% ===========================================
 
 % Compensate the pseudo-delay
-delay   = 0;
+delay   = 2.6;
 hue     = mod(data_fftagl_one - (delay/20)*2*pi, 2*pi)./(2*pi);
 
 % Reverse the hue for DOWN cycle
@@ -168,12 +221,21 @@ hue = hue.*hue_lim;
 
 
 saturation      = data_fftamp_one;
-saturation_lim  = 0.03; 
+% ========== plot amplitude map ================
+    h1 = subplot(2,4,7);
+    map_amp = reshape(saturation, para.height, para.width); 
+    imagesc(map_amp);
+    axis image, colormap(h1, gray), colorbar
+% ===========================================
+saturation_lim  = 0.01; 
 saturation      = min(saturation./saturation_lim,1);
 map_rgb         = hsv2rgb([hue; saturation; saturation]');
 map_rgb         = reshape(map_rgb, [para.height, para.width,3]);
-
-figure,imagesc(map_rgb),axis image, colormap(hsv)
+% ========== plot phase map ================
+    h2 = subplot(2,4,8);
+    imagesc(map_rgb); 
+    axis image, colormap(h2, hsv), colorbar
+% ===========================================
 colorbar('Ticks',0.8.*(para.preStim + para.durStim.*[0:6]./6)./(para.preStim + para.durStim + para.postStim),...
          'TickLabels',{'A4','A5','A6','A7','A8','A9','A10'})
 

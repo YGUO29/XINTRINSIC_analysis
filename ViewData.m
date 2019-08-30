@@ -1,4 +1,4 @@
-function ViewData(para,DataMat,opt)
+function X = ViewData(DataMat, para, opt)
 % DataMat = [rep, trial, height, width, frams]
 
 if isempty(opt.reps)
@@ -28,6 +28,7 @@ if strcmp(opt.mode,'avgrep')
         % calculate deltaF/F (averaged image)
         img_rel(i,:,:) = squeeze(mean(mov_rel(i,:,:,floor(para.fr*opt.tWindow(1))+1 : floor(para.fr*opt.tWindow(2))),4));  
     end
+    X = reshape(img_rel,nPanels, para.width*para.height);
     
     fnametemp = para.filename;
     vnametemp = [para.pathname, para.filename(1:end-4), '_trial', ...

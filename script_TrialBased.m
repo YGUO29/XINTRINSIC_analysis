@@ -1,6 +1,6 @@
-% clear all
+clear all
 
-MonkeyID = 3; % 1: 80Z; 2: 132D session11; 3: 132D session2; 4: 132D 1st Scrambled; 6: 132D 2nd Scrambled
+MonkeyID = 0; % 1: 80Z; 2: 132D session11; 3: 132D session2; 4: 132D 1st Scrambled; 6: 132D 2nd Scrambled
 
 if MonkeyID == 1 % 80Z
 file_mat = '180724T140401_Blue_Koehler_Fluo_GFP_P1.mat';
@@ -41,12 +41,11 @@ else % browse to open a file
         [file_mat,path_mat] = uigetfile('*.mat','Select a mat file to analyze','\\FANTASIA-DS3617\Test_Imaging\2018.11.T1 (Marmoset 132D, Xintrinsic)');
         load(fullfile(path_mat,file_mat));clc
         [~,nametemp,~,] = fileparts(file_mat);
-        load(fullfile(path_mat,[nametemp(1:35),'.mat']));
+        load(fullfile(path_mat,[nametemp(1:end-3),'.mat']));
         [file_tif,path_tif] = uigetfile('*.tif','Select a surface image','\\FANTASIA-DS3617\Test_Imaging\2018.11.T1 (Marmoset 132D, Xintrinsic)');
         I = imread(fullfile(path_tif,file_tif));
 end
 
-%
 % I = double(imresize(I,1/16));
 para.nRep =     size(P.ProcDataMat,1);
 para.nStim =    size(P.ProcDataMat,2);
@@ -64,37 +63,23 @@ para.pathname = path_mat;
 DataMat =       P.ProcDataMat;
 I = double(imresize(I,[para.height,para.width]));
 clear S P
-%% select trials to compare Calcium and intrinsic imaging (temp)
-% the entire set of natural sounds
-folder_sound = 'D:\=code=\McdermottLab\sound_natural\';
-list = dir(fullfile(folder_sound,'*.wav'));
-names_sound = natsortfiles({list.name})';
-% the subset of natural sounds for intrinsic imaging
-folder_sound = '\\FANTASIA-DS3617\Test_Imaging\=Sounds=\Natural_XINTRINSIC2';
-list = dir(fullfile(folder_sound,'*.wav'));
-names_sound2 = natsortfiles({list.name})';
-% pick out trials for the selected natural sounds
-opt.trials = [];
-for i = 1:length(names_sound2)-1
-    opt.trials(i) = find(strcmp(names_sound2(i+1),names_sound));
-end
 
 %% View data
-opt.ampLimit    =  [0 0.3];
+opt.ampLimit    =  0.2.*[-1 1];
 opt.mode        =  'avgrep'; % avgrep or allrep
-opt.plotMode    =  'separate'; % combined or separate (video saving is only available for 'combined' mode)
+opt.plotMode    =  'combined'; % combined or separate (video saving is only available for 'combined' mode)
 % opt.trials =    44+[1:12,23:28]; 
-opt.trials      = [1 4 7];
+opt.trials      = 1:para.nStim;
 opt.saveON      = 0; 
 opt.soundON     = 0;
 opt.reps        = [];
-opt.tWindow     = []; % start and end of integration window for calculating response amplitude
+opt.tWindow     = [para.preStim, para.preStim + 8]; % start and end of integration window for calculating response amplitude
 
-ViewData(para,DataMat,opt)
+X = ViewData(DataMat, para, opt);
 %%  Variance across reps 1
 opt.plotON      = 1;
 opt.ampLimit    = 0.1;
-opt.tWindow     = []; % select time window for analysis (default is the stimulus-on period)
+opt.tWindow     = [para.preStim, para.preStim + 10]; % select time window for analysis (default is the stimulus-on period)
 Var           = AnalysisVar(para,DataMat,opt);
 %% ============== Generate a mask ==============
 %% Manually drawn circular mask
@@ -136,28 +121,8 @@ SoundName =                         natsortfiles({list.name})';
 SoundName_inorder =                 SoundName(I_mean);
 
 
-%% ============ construct a matrix for ICA analysis ===================
-X = zeros(para.nStim,para.width*para.height);
-reps = 1:para.nRep;
-for i = 1:para.nStim
-    mov = DataMat(reps,i,:,:,:);
-    mov_mean = squeeze(mean(mov,1)); % height x width x frames
 
-    img_base = squeeze(mean(mov_mean(:,:,1:floor(para.fr*para.preStim)),3)); % first second: baseline
-    
-    % response window: same as stimulus period
-    img_amp = squeeze(mean(mov_mean(:,:,floor(para.fr*para.preStim)+1:floor(para.fr*para.preStim+ + para.fr*para.durStim)),3));
-
-    % response window: after stimulus (offset)
-%     img_amp = squeeze(mean(mov_mean(:,:,floor(para.fr*para.preStim+ + para.fr*para.durStim)+1:end),3));
-
-    img_relamp = (img_amp - img_base)./img_base;
-%     img_relamp = img_relamp.*mask_final;
-%     img_relamp = img_relamp.*mask_corr;
-    X(i,:) = reshape(img_relamp,para.width*para.height,1);
-end
-
-% perform ICA analysis
+%% perform ICA analysis
 addpath('D:\=code=\McdermottLab\toolbox_nonparametric-ICA')
 K = 6;
 
@@ -170,15 +135,17 @@ I_norm = (I - min(min(I)))./(max(max(I)) - min(min(I)));
 
 figure,
 [p,n] = numSubplots(K);
-cutoff = 0.1;
-for i = 1:1
+cutoff = 0.05;
+for i = 1:6
     comp{i} = reshape(W(i,:),para.height,para.width);
+    % ============= plot components only =============
 %     subplot(p(1),p(2),i),imagesc(comp{i},cutoff.*[-1 1]),axis image, colorbar
+    % ============= plot components with image =============
     mask = comp{i}; mask(mask > cutoff) = cutoff; mask(mask < - cutoff) = - cutoff;
     mask = mask.*8; 
     img = repmat(I_norm,1,1,3); % three layers, representing R,G,B 
     img(:,:,1) = img(:,:,1) + mask;
-%     subplot(p(1),p(2),i),
+    subplot(p(1),p(2),i),
     imagesc(img),axis image
 end
 
@@ -186,7 +153,7 @@ end
 plot_on = 1;
 [I_inorder, R_inorder, tags_inorder, snames_inorder] = getResponseProfile(R,plot_on);
 %% regression with sound features
-load('D:\=code=\Sound_analysis\F_yg_marm_full.mat') 
+load('D:\=code=\Sound_analysis\F_yg_marm.mat') 
 nFeat       = size(F.F_mat,1);
 result_p = zeros(nFeat,K);
 result_r = zeros(nFeat,K);
@@ -210,8 +177,8 @@ scr_size = scr_size(3:4); %width and height
 % f1 = figure,set(gcf,'position',[1,scr_size(2)./2,scr_size(1),scr_size(2)./3]);
 % f2 = figure,set(gcf,'position',[1,1,scr_size(1),scr_size(2)./3]);
 f = figure; set(gcf,'position',[1,1,scr_size]);
-ind = [1 2 5 6 4 3];
-% ind = [1 2 3 4 5 6]; % plot order
+% ind = [1 2 5 6 4 3];
+ind = [1 2 3 4 5 6]; % plot order
 for iComp = 1:K
     % correlation with frequency power
 %     figure(f1)    
@@ -226,10 +193,24 @@ for iComp = 1:K
     title(['Correlation coefficient, component #',num2str(ind(iComp))],'fontsize',14)
 
 %     figure(f2)
+    subplot(2,K,iComp + K), 
+    spectemp_r = reshape(result_r(F.nFreq+1:F.nFreq+F.nSpectemp,ind(iComp)), ...
+                        size(F.spectemp_mod,1), size(F.spectemp_mod,2));
+    cmax = max(max(  abs( result_r(F.nFreq+1 : F.nFreq+F.nSpectemp,1:K) )  )); 
+    imagesc(flipud(spectemp_r),[-cmax, cmax]),colorbar, colormap('jet')
+    set(gca,'ytick',1:length(F.spec_mod_rates))
+    set(gca,'yticklabels',arrayfun(@num2str,fliplr(F.spec_mod_rates),'UniformOutput',false), 'fontsize',12)
+    set(gca,'xtick',1:length(F.temp_mod_rates)-1)
+    set(gca,'xticklabels',arrayfun(@num2str,F.temp_mod_rates(2:end),'UniformOutput',false), 'fontsize',12)
+    xlabel('Temporal modulation rate (cycles/s)','fontsize',14),
+    ylabel('Spectral modulation rate (cycles/octave)','fontsize',14),
+    title(['Correlation coefficient, component #',num2str(ind(iComp))],'fontsize',14)
+
+%   correlation with the full spectrotemporal modulation power map
 %     subplot(2,K,iComp + K), 
-%     spectemp_r = reshape(result_r(F.nFreq+1:F.nFreq+F.nSpectemp,ind(iComp)), ...
-%                         size(F.spectemp_mod,1), size(F.spectemp_mod,2));
-%     cmax = max(max(  abs( result_r(F.nFreq+1 : F.nFreq+F.nSpectemp,1:K) )  )); 
+%     spectemp_r = reshape(result_r(F.nFreq+1:F.nFreq+F.nSpectemp_full,ind(iComp)), ...
+%                         size(F.spectemp_mod_full,1), size(F.spectemp_mod_full,2));
+%     cmax = max(max(  abs( result_r(F.nFreq+1 : F.nFreq+F.nSpectemp_full,1:K) )  )); 
 %     imagesc(flipud(spectemp_r),[-cmax, cmax]),colorbar, colormap('jet')
 %     set(gca,'yticklabels',arrayfun(@num2str,fliplr(F.spec_mod_rates),'UniformOutput',false), 'fontsize',12)
 %     set(gca,'xticklabels',arrayfun(@num2str,F.temp_mod_rates,'UniformOutput',false), 'fontsize',12)
@@ -237,24 +218,12 @@ for iComp = 1:K
 %     ylabel('Spectral modulation rate (cycles/octave)','fontsize',14),
 %     title(['Correlation coefficient, component #',num2str(ind(iComp))],'fontsize',14)
 
-%   correlation with the full spectrotemporal modulation power map
-    subplot(2,K,iComp + K), 
-    spectemp_r = reshape(result_r(F.nFreq+1:F.nFreq+F.nSpectemp_full,ind(iComp)), ...
-                        size(F.spectemp_mod_full,1), size(F.spectemp_mod_full,2));
-    cmax = max(max(  abs( result_r(F.nFreq+1 : F.nFreq+F.nSpectemp_full,1:K) )  )); 
-    imagesc(flipud(spectemp_r),[-cmax, cmax]),colorbar, colormap('jet')
-    set(gca,'yticklabels',arrayfun(@num2str,fliplr(F.spec_mod_rates),'UniformOutput',false), 'fontsize',12)
-    set(gca,'xticklabels',arrayfun(@num2str,F.temp_mod_rates,'UniformOutput',false), 'fontsize',12)
-    xlabel('Temporal modulation rate (cycles/s)','fontsize',14),
-    ylabel('Spectral modulation rate (cycles/octave)','fontsize',14),
-    title(['Correlation coefficient, component #',num2str(ind(iComp))],'fontsize',14)
-
 %     saveas(f,['80Z_session1_component_',num2str(iComp),'.png'])
 
 end
 % saveas(f1,'132D_session1_FreqPower.png')
 % saveas(f2,'132D_session1_SpecTemp.png')
-saveas(f,'132D_session1_reg_reordered_full.png')
+saveas(f,'80Z_session1_reg.png')
 
 
 %% calculate percentage variance explained by this number of components
@@ -291,35 +260,19 @@ end
 result(1) = median(rho);
 result(2) = median(rho_norm)
 
-%% Tonotopic map analysis
-X1 = X(1:7,:);
-X2 = X(8:end,:);
-freqs = logspace(log10(220),log10(14080),7);
-% calculate weighted preferred frequency
-I_bf1 = zeros(width*height,1);
-figure
-for i = 1:width*height
-    temp = X1(:,i); temp(temp<0) = 0;
-    if var(temp./sum(temp))>0
-%         I_bf1(i) = freqs*(temp./sum(temp));
-        [~,ind] = max(temp);
-        I_bf1(i) = freqs(ind);
-        plot(temp),hold on
-    end
-
-    
+%% select trials to compare Calcium and intrinsic imaging (temp)
+% the entire set of natural sounds
+folder_sound = 'D:\=code=\McdermottLab\sound_natural\';
+list = dir(fullfile(folder_sound,'*.wav'));
+names_sound = natsortfiles({list.name})';
+% the subset of natural sounds for intrinsic imaging
+folder_sound = '\\FANTASIA-DS3617\Test_Imaging\=Sounds=\Natural_XINTRINSIC2';
+list = dir(fullfile(folder_sound,'*.wav'));
+names_sound2 = natsortfiles({list.name})';
+% pick out trials for the selected natural sounds
+opt.trials = [];
+for i = 1:length(names_sound2)-1
+    opt.trials(i) = find(strcmp(names_sound2(i+1),names_sound));
 end
-I_bf1 = reshape(I_bf1,height,width);
-figure,imagesc(I_bf1),axis image
-
-% I_bf2 = zeros(width*height,1);
-% for i = 1:width*height
-%     temp = X2(:,i); temp(temp<0) = 0;
-%     I_bf2(i) = freqs*(temp./sum(temp));
-% %     [~,ind] = max(temp);
-% %     I_bf2(i) = freqs(ind);
-% end
-% I_bf2 = reshape(I_bf2,height,width);
-% figure,imagesc(I_bf2),axis image
 
 
