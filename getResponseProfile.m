@@ -1,6 +1,5 @@
 function [I_inorder, R_inorder, tags_inorder, snames_inorder] = getResponseProfile(R,plot_on)
 % filelist = dir('\\10.16.58.229\Test_Procedures\==Slides & Documents\Music\naturalsounds165\naturalsounds165')
-
 folder_origin = 'D:\=code=\McdermottLab\sound_natural';
 list = dir(fullfile(folder_origin,'*.wav'));
 snames = natsortfiles({list.name})';
@@ -30,46 +29,60 @@ Color = C.colors;
 [R_inorder,I_inorder] = sort(R,'descend');
 tags_inorder = R;
 snames_inorder = cell(size(tags_inorder));
-close all
-if plot_on; figure; end
-for i = 1:3
-    if size(R,2) >= i
-        resp = R_inorder(:,i); index = I_inorder(:,i);
-        tags_inorder(:,i) = tags(index);
-        snames_inorder(:,i) = snames(index);
-        Color_inorder = Color(tags_inorder(:,i),:);
+% close all
+if plot_on; 
+    figure; 
+    set(gcf,'color','w')
+end
+% ind = [3 2 4 6 5 1]; % for 80Z
+% ind = [4 2 3 5 1 6]; % for 132D, session 2
+ind = 1:size(R,2);
+for i = 1:length(ind)
+    if size(R,2) >= ind(i)
+        resp = R_inorder(:,ind(i)); index = I_inorder(:,ind(i));
+        tags_inorder(:,ind(i)) = tags(index);
+        snames_inorder(:,ind(i)) = snames(index);
+        Color_inorder = Color(tags_inorder(:,ind(i)),:);
         if plot_on
-            subplot(3,1,i)
+%             subplot(3,1,i)
+            subplot(1,length(ind),i)
             b = bar(resp,'FaceColor','flat');
-            title(['Response Magnitude, Component ',num2str(i)],'fontsize',16)
+            title(['Component ',num2str(i)],'fontsize',16)
             b.CData = Color_inorder;
+            ylim([-0.5 2.5]), xlim([1 165])
+            xticks([1 165])
+            set(gca,'fontsize',24)
+            axis square
+
         end
     else break
     end
 end
 
-if plot_on; figure; end
-for i = 4:6
-    if size(R,2) >= i
-        resp = R_inorder(:,i); index = I_inorder(:,i);
-        tags_inorder(:,i) = tags(index);
-        snames_inorder(:,i) = snames(index);
-        Color_inorder = Color(tags_inorder(:,i),:);
-        if plot_on
-            subplot(3,1,i-3)
-            b = bar(resp,'FaceColor','flat');
-            title(['Response Magnitude, Component ',num2str(i)],'fontsize',16)
-            b.CData = Color_inorder;
-        end
-    else break
-    end
-end
+% if plot_on; figure; end
+% for i = 4:6
+%     if size(R,2) >= i
+%         resp = R_inorder(:,i); index = I_inorder(:,i);
+%         tags_inorder(:,i) = tags(index);
+%         snames_inorder(:,i) = snames(index);
+%         Color_inorder = Color(tags_inorder(:,i),:);
+%         if plot_on
+% %             subplot(3,1,i-3)
+%             subplot(1,6,i)
+%             b = bar(resp,'FaceColor','flat');
+%             title(['Response Magnitude, Component ',num2str(i)],'fontsize',16)
+%             b.CData = Color_inorder;
+%             ylim([-0.5 2.5])
+%         end
+%     else break
+%     end
+% end
 
 %% plot response amplitude according to catagories
 RespGroupMean = zeros(6,nTags);
 RespGroupStd  = RespGroupMean;
 for t = 1:nTags
-    for i = 1:6
+    for i = 1:length(ind)
     %     resp = R_inorder(:,i); index = I_inorder(:,i);
     index = find(tags == t);
     resp_temp = R(index,i);
@@ -79,8 +92,8 @@ for t = 1:nTags
 end
 if plot_on
     figure,
-    for i = 1:6
-    subplot(2,3,i),errorbar(RespGroupMean(i,:),RespGroupStd(i,:))
+    for i = 1:length(ind)
+    subplot(1,length(ind),i),errorbar(RespGroupMean(i,:),RespGroupStd(i,:))
     end
 end
 

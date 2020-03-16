@@ -58,36 +58,50 @@ end
 %% averaged variance of reps across reps
 if para.nRep ~= 1
     Var.RepMean =   squeeze(mean(Var_rep,1));
-    Var.RepRel =    Var.RepMean./squeeze(mean(img_relamp,1));    % the relative variance (normalized by mean amplitude)
+    Var.RepRel =    Var.RepMean./abs(squeeze(mean(img_relamp,1)));    % the relative variance (normalized by mean amplitude)
 
     if opt.plotON
-        figure,imagesc(Var.RepMean),axis image, colorbar
-        title('Variance across reps, averaged across frames and stimulus')
-        figure, imagesc(Var.RepRel,[0 opt.ampLimit]),axis image, colorbar
-        title('Variance across reps, averaged across frames and stimulus (normalized)')
+        figure, imagesc(Var.RepMean),axis image, colorbar
+        caxis([0 prctile(Var.RepMean(:),opt.ampLimit)])
+        axis off
+        title('Variance across repetitions \newline (averaged across frames and stimulus)','fontsize',16)
+        
+        figure, imagesc(Var.RepRel),axis image, colorbar
+        caxis([0 prctile(Var.RepRel(:),opt.ampLimit)])
+        axis off
+        title('Normalized variance across repetitionss \newline (averaged across frames and stimulus?', 'fontsize',16)
     end
 end
 %% averaged variance of stims across stimuli
 if para.nStim ~= 1
     Var.StimMean =   squeeze(mean(Var_stim,1));
-    Var.StimRel =    Var.StimMean./squeeze(mean(img_relamp,1));    % the relative variance (normalized by mean amplitude)
+    Var.StimRel =    Var.StimMean./abs(squeeze(mean(img_relamp,1)));    % the relative variance (normalized by mean amplitude)
 
     if opt.plotON
         figure,imagesc(Var.StimMean),axis image, colorbar
-        title('Variance across stimuli, averaged across frames and stimulus')
-        figure, imagesc(Var.StimRel,[0 opt.ampLimit]),axis image, colorbar
-        title('Variance across stimuli, averaged across frames and stimulus (normalized)')
+        caxis([0 prctile(Var.StimMean(:),opt.ampLimit)])
+        axis off
+        title('Variance across stimuli \newline (averaged across frames and reps?','fontsize',16)
+        
+        figure, imagesc(Var.StimRel),axis image, colorbar
+        caxis([0 prctile(Var.StimRel(:),opt.ampLimit)])
+        axis off
+        title('Normalized variance across stimuli \newline (averaged across frames and reps)', 'fontsize',16)
     end
 end
 %% averaged variance of frames, across stim and reps
 
 Var.FrameMean =   squeeze(mean(Var_frame,1));
-Var.FrameRel =    Var.FrameMean./squeeze(mean(img_relamp,1));    % the relative variance (normalized by mean amplitude)
+Var.FrameRel =    Var.FrameMean./abs(squeeze(mean(img_relamp,1)));    % the relative variance (normalized by mean amplitude)
 
 if opt.plotON
     figure,imagesc(Var.FrameMean),axis image, colorbar
-    title('Variance across frames, averaged across frames and stimulus')
-    figure, imagesc(Var.FrameRel,[0 opt.ampLimit]),axis image, colorbar
-    title('Variance across frames, averaged across frames and stimulus (normalized)')
+    caxis([0 prctile(Var.FrameMean(:),opt.ampLimit)])
+    axis off
+    title('Variance across frames \newline (averaged across reps and stimulus)', 'fontsize',16)
+    figure, imagesc(Var.FrameRel),axis image, colorbar
+    caxis([0 prctile(Var.FrameRel(:),opt.ampLimit)])
+    axis off
+    title('Normalized variance across frames \newline (averaged across reps and stimulus)', 'fontsize',16)
 end
 end

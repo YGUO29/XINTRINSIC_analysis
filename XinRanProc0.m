@@ -50,7 +50,7 @@ for i = 1: length(F.FileName)
     
     %% Parameter initialization for Spatial & Temporal Binning
     
-    R.SesTrlNumTotal =          length(S.SesTrlOrderVec);
+    R.SesTrlNumTotal =          S.TrlNumberTotal;
     R.SysCamFramePerTrial =     S.TrlDurTotal * R.SysCamFrameRate;
     P.ProcFramePerTrial =       S.TrlDurTotal * P.ProcFrameRate;   
     P.ProcFrameNumTotal =       S.SesFrameTotal / P.ProcFrameBinNum;
@@ -63,15 +63,15 @@ for i = 1: length(F.FileName)
     P.ProcMeanPower =           zeros(1, P.ProcFrameNumTotal);
     
     P.ProcDataMat =             zeros(...
-                                    S.SesCycleNumTotal,...
-                                    S.TrlNumTotal,...
+                                    S.SesCycleTotal,...
+                                    S.TrlNumberTotal,...
                                     P.ProcPixelHeight,...
                                     P.ProcPixelWidth,...
                                     P.ProcFramePerTrial...
                                     );                         
-    for j = 1:S.SesCycleNumTotal
-        for k = 1:S.TrlNumTotal
-            m = (j-1)*S.TrlNumTotal + k;
+    for j = 1:S.SesCycleTotal
+        for k = 1:S.TrlNumberTotal
+            m = (j-1)*S.TrlNumberTotal + k;
             %% Update GUI
             waitbar(m/R.SesTrlNumTotal, T.hWaitbar,...
                 ['finishing ',...
@@ -87,7 +87,9 @@ for i = 1: length(F.FileName)
                                     (m*     R.SysCamFramePerTrial);
             T.ProcFramesCurrent =   ((m-1)*	P.ProcFramePerTrial +1):...
                                     (m*     P.ProcFramePerTrial);        
-            T.TrialOrder =          S.SesTrlOrderVec(m);            
+%             T.TrialOrder =          S.SesTrlOrderVec(m); 
+            T.TrialOrder =          1;            
+
             %% Image Processing
             T.PixelMeanRaw =        mean(T.DataRaw, 1);
             T.PixelMeanBinned =     mean( reshape(...

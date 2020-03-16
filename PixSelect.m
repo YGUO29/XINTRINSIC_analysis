@@ -108,6 +108,7 @@ figure,imagesc(img),axis image, axis off, title('Significance mask')
 img = repmat(I_norm,1,1,3); % three layers, representing R,G,B 
 img(:,:,1) = img(:,:,1) + mask_consis;
 figure,imagesc(img),axis image, axis off, title('Consistency mask')
+figure,imagesc(reshape(r,para.height,para.width)), axis image, axis off, colorbar, title('Consistency value map')
 
 img = repmat(I_norm,1,1,3); % three layers, representing R,G,B 
 img(:,:,1) = img(:,:,1) + mask_corr;
