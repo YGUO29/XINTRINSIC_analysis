@@ -1,4 +1,7 @@
 function ViewData_raw(DataMat, para, opt)
+% for viewing a continous stimulus session, baseline set as the average
+% amplitude of the entire session
+
 % DataMat = [height, width, frams]
 mov         = squeeze(DataMat); 
 if length(size(mov)) == 4 % more than one reps

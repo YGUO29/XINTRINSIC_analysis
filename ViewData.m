@@ -1,13 +1,31 @@
 function [X, mov_rel] = ViewData(DataMat, para, opt)
 % DataMat = [rep, trial, height, width, frams]
 
-if isempty(opt.reps)
+if ~isfield(opt, 'reps')
     opt.reps = 1:para.nRep;
 end
-
-if isempty(opt.tWindow)
+if ~isfield(opt, 'tWindow')
     opt.tWindow = [para.preStim, para.preStim + para.durStim];
 end
+if ~isfield(opt, 'trials')
+    opt.trials = 1:para.nStim;
+end
+if ~isfield(opt, 'ampLimit')
+    opt.ampLimit = 0.2.*[0 1];
+end
+if ~isfield(opt, 'mode')
+    opt.mode = 'avgrep'; % avgrep or allrep
+end
+if ~isfield(opt, 'plotMode')
+    opt.plotMode    =  'combined'; % combined or separate (video saving is only available for 'combined' mode)
+end
+if ~isfield(opt, 'saveON')
+    opt.saveON      = 0;
+end
+if ~isfield(opt, 'soundON')
+    opt.soundON     = 0; % save the sound for this recording as well
+end
+
 
 %% generate matrix of movies, for different display mode
 if strcmp(opt.mode,'avgrep')
@@ -75,7 +93,7 @@ switch opt.plotMode
     case 'combined'
     if opt.saveON
         if opt.soundON % video with sound
-            folder_sound = 'D:\=code=\McdermottLab\sound_natural\modified\';
+            folder_sound = 'D:\=code=\McdermottLab\sound_natural\modified_5s\';
             list = dir(fullfile(folder_sound,'*.wav'));
             names_sound = natsortfiles({list.name})';
             [sounddata,fs] = audioread(fullfile(folder_sound,names_sound{opt.trials})); 
@@ -100,8 +118,12 @@ switch opt.plotMode
     end
 
     % arrange subplots 
-    [p,n] = numSubplots(nPanels); 
-%     p(1) = 8; p(2) = 17; n = nPanels;
+    if ~isfield(opt, 'p')
+        [p,n] = numSubplots(nPanels); 
+    else
+        p = opt.p;
+        n = p(1)*p(2);
+    end
     % construct a combined matrix for mean images
     img_rel = permute(img_rel,[2,3,1]); % height x width x trials
     if nPanels < n % pad with 0 if one block is left empty
@@ -136,18 +158,28 @@ switch opt.plotMode
         title(['time = ',num2str(i*(1./para.fr),'%-5.1f')])
         pause(1/para.fr)
 %             pause
-        if opt.saveON    
-            % save video and audio
-            MAX =           opt.ampLimit(2);
-            MIN =           min(min(mov_all));
-            mov_all =       (2^8-1).* (mov_all - MIN)./(MAX - MIN);
-            mov_all =       uint8(mov_all);
-            
+
+        if opt.saveON   
             mov_all =       repelem(mov_all, 2, 2);% ......... for better video effect
-%             frame =         ind2rgb(mov_all,jet(256));
-            frame =         repmat(mov_all,1,1,3); 
-            frame(:,:,1) =  mov_all*0; % use green color
-            frame(:,:,3) =  mov_all*0;
+            c = jet(256);
+            c = uint8(c.*(2^8-1));
+            frame_rgb = uint8(zeros(size(mov_all,1), size(mov_all,2), 3));
+%             Max = max(abs(mov_all(:)));
+            Max = opt.ampLimit(2); 
+            rgb_ind = floor(mov_all.*(255/2/Max)+257/2);
+            rgb_ind(rgb_ind>256) = 256;
+            frame_rgb = c(rgb_ind,:);
+            frame = reshape(frame_rgb, size(mov_all,1), size(mov_all,2), 3);
+            
+            % save video and audio
+%             MAX =           opt.ampLimit(2);
+%             MIN =           min(min(mov_all));
+%             mov_all =       (2^8-1).* (mov_all - MIN)./(MAX - MIN);
+%             mov_all =       uint8(mov_all);
+%             mov_all =       repelem(mov_all, 2, 2);% ......... for better video effect
+%             frame =         repmat(mov_all,1,1,3); 
+%             frame(:,:,1) =  mov_all*0; % use green color
+%             frame(:,:,3) =  mov_all*0;
             if opt.soundON
                 if i*SoundBatchSampleNum > length(SoundSeq) % if end of current frame is longer than sound (by <1 segment)
                     videoFWriter(frame,SoundSeq((i-1)*SoundBatchSampleNum+1:end) );
@@ -163,6 +195,14 @@ switch opt.plotMode
     end
     set(h,'CData',img_all)
     if opt.saveON % write the last frame and release object videoFWriter
+        img_all =       repelem(img_all, 2, 2);% ......... for better video effect
+        frame_rgb = uint8(zeros(size(img_all,1), size(img_all,2), 3));
+%             Max = max(abs(mov_all(:)));
+        Max = opt.ampLimit(2); 
+        rgb_ind = floor(img_all.*(255/2/Max)+257/2);
+        rgb_ind(rgb_ind>256) = 256;
+        frame_rgb = c(rgb_ind,:);
+        frame = reshape(frame_rgb, size(img_all,1), size(img_all,2), 3);
 %         MAX =           opt.ampLimit(2);
 %         MIN =           min(min(img_all));
 %         img_all =       (2^8-1).*(img_all - MIN)./(MAX - MIN);
@@ -172,17 +212,19 @@ switch opt.plotMode
 %         frame =         repmat(img_all,1,1,3);
 %         frame(:,:,1) =  img_all*0;
 %         frame(:,:,3) =  img_all*0;
-%         if opt.soundON
-%             if i*SoundBatchSampleNum > length(SoundSeq) % if end of current frame is longer than sound (by <1 segment)
-%                 videoFWriter(frame,SoundSeq((i-1)*SoundBatchSampleNum+1:end) );
-%             elseif (i-1)*SoundBatchSampleNum+1 > length(SoundSeq) % if 
-%                 videoFWriter(frame);
-%             else            
-%                 videoFWriter(frame,SoundSeq((i-1)*SoundBatchSampleNum+1:i*SoundBatchSampleNum) );
-%             end
-%         else
-%             videoFWriter(frame);
-%         end
+
+        if opt.soundON
+            if i*SoundBatchSampleNum > length(SoundSeq) % if end of current frame is longer than sound (by <1 segment)
+                videoFWriter(frame,SoundSeq((i-1)*SoundBatchSampleNum+1:end) );
+            elseif (i-1)*SoundBatchSampleNum+1 > length(SoundSeq) % if 
+                videoFWriter(frame);
+            else            
+                videoFWriter(frame,SoundSeq((i-1)*SoundBatchSampleNum+1:i*SoundBatchSampleNum) );
+            end
+        else
+            videoFWriter(frame);
+        end
+        
         release(videoFWriter) 
     end
  %% plot separately, cannot save videos

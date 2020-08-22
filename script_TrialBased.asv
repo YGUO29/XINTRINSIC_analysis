@@ -40,7 +40,7 @@ else % load multiple files
         load(fullfile(path_mat,file_mat{i}));
         file_parts = strsplit(file_mat{i},{'_','.'});
         ind = find(strcmp(file_parts,'P1'));
-        nametemp = strjoin(file_parts(1:ind-2),'_');
+        nametemp = strjoin(file_parts(1:ind-1),'_');
         load(fullfile(path_mat,[nametemp,'.mat']));
 
     if para.nRep + i == 1 % read the initial file
@@ -74,10 +74,10 @@ opt = struct;
 %     opt.trials = 162; 
 %     opt.reps = ;
 %     opt.tWindow     = [para.preStim, para.preStim + 18]; % start and end of integration window for calculating response amplitude
-% [X, DataMat_norm] = getX(DataMat_mask, para, opt);
+% [X, DataMat_norm] = getX(DataMat, para, opt);
 
 % get data matrix X and view the video
-    opt.ampLimit    = 0.25.*[-1 1];
+    opt.ampLimit    = 0.3.*[-1 1];
 %     opt.tWindow     = [para.preStim, para.preStim + 18];
 %     opt.p           = [2,5]; % subplot rows and columes; 
 %     opt.mode        = 'allrep';
@@ -97,7 +97,7 @@ save(['python_', file_mat], 'data')
 %% perform ICA analysis (Norman-Haignere 2015)
 addpath('D:\=code=\McdermottLab\toolbox_nonparametric-ICA') % MAKE SURE
 % THIS FOLDER IS ON THE TOP OF THE PATH LIST IN MATLAB!!!!
-K = 6;
+K = 15;
 RANDOM_INITS = 10;      
 PLOT_FIGURES = 0;
 % ========= reverse the sign for X for intrinsic imaging ========
@@ -145,7 +145,7 @@ ylabel('reconstruction error')
 % ylabel('MSE')
 %% visualize reconstructed X
 X_hat = R * W;
-i = 15;
+i = 165;
 figurex;
 subplot(1,2,1), imagesc(reshape(-X(i,:), para.height, para.width)), axis image
 subplot(1,2,2), imagesc(reshape(X_hat(i,:), para.height, para.width)), axis image
@@ -154,7 +154,7 @@ ind = 1:K;
 % % ind = [3 2 4 6 5 1]; % for 80Z
 % ind = [1 2 5 4 3 6]; % for 132D 1/19 session
 % ind = [1 2 4 6 5 3]; % for 132D, session 2
-p = [1, K];
+p = [4 K/4];
 figurex;
 set(gcf,'color','w','position', [1323, 380, 1365, 192]);
 ha = tight_subplot(p(1),p(2),[.01 .01],[.1 .01],[.01 .01]);
