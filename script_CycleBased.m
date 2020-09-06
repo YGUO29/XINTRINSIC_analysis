@@ -7,7 +7,7 @@ load(fullfile(path_mat,file_mat));clc
 % Sys = load(fullfile(path_mat,[nametemp(1:end-3),'.mat']));
 file_parts = strsplit(file_mat,{'_','.'});
 ind = find(strcmp(file_parts,'P1'));
-nametemp = strjoin(file_parts(1:ind-2),'_');
+nametemp = strjoin(file_parts(1:ind-1),'_');
 load(fullfile(path_mat,[nametemp,'.mat']));
 
 % I = double(imresize(I,1/16));
@@ -33,7 +33,7 @@ DataMat =       P.ProcDataMat;
 
 % load stimulus information
 % if contains(Sys.S.SesSoundFile, 'DMR')
-if contains(S.SesSoundFile, 'DMR')
+if contains(S.SesSoundFile, 'DMR') | contains(S.SesSoundFile, 'DRM')
     [file_mat,path_mat] = uigetfile('*.mat','Select a mat file to analyze','D:\=sounds=\DMR');
     load(fullfile(path_mat,file_mat));
     para.tonotopy = 0; % not tonotopy mode
@@ -80,8 +80,10 @@ if para.tonotopy
     period          = para.preStim + para.durStim + para.postStim;
     rep             = para.nRep;
 else
-    period          = S.tm_period; 
-    rep             = S.tm_cycles;
+%     period          = S.tm_period; 
+%     rep             = S.tm_cycles;
+    period = 19;
+    rep = 23;
 end
 
 % concatenate repetitions (total frames x total #pixs)
