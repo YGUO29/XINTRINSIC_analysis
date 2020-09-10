@@ -1,9 +1,9 @@
 % variance explained by acoustic features and categories
 % Y: features to be regress against (165 x N)
 % z: response profile (165 x 1)
-load('D:\=code=\Sound_analysis\F_halfcosine_marm.mat')
+load('D:\SynologyDrive\=code=\Sound_analysis\F_halfcosine_marm.mat')
 % load('D:\=code=\Sound_analysis\F_test.mat')
-load('D:\=code=\XINTRINSIC_analysis\category_regressors.mat')
+load('D:\SynologyDrive\=code=\XINTRINSIC_analysis\category_regressors.mat')
 % In structure F:
 % F_mat rows 1~9: frequency powers
 % F_mat rows 10~10+7*9-1 = 10~72: combined spectrotemporal modulation

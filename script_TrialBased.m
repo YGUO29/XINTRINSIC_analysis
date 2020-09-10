@@ -77,22 +77,25 @@ opt = struct;
 % [X, DataMat_norm] = getX(DataMat, para, opt);
 
 % get data matrix X and view the video
-    opt.ampLimit    = 0.15.*[-1 1];
-    opt.tWindow     = [para.preStim, para.preStim + 16];
+    opt.ampLimit    = 0.05.*[-1 1];
+    opt.tWindow     = [para.preStim, para.preStim + 16]; % intrinsic natural sound: prestim+16s
 %     opt.p           = [8, 17]; % subplot rows and columes; 
 %     opt.mode        = 'allrep';
 %     opt.saveON      = 1;
 %     opt.soundON     = 1;
 %     para.pathname = 'E:\OneDrive - Johns Hopkins\temp\NatSound Videos\';
     figurex;
-    [X, DataMat_norm] = ViewData(DataMat, para, opt); % X may contain NaNs if there are masked pixels
+    [X, DataMat_norm] = ViewData(DataMat_mask, para, opt); % X may contain NaNs if there are masked pixels
 % ======== construct a X without NaN ========
 [~, ind_delete]     = find( isnan(X) ); % linear index
 para.ind_save            = setdiff(1:para.width*para.height, ind_delete);
 X(:, ind_delete)    = [];
 %% save MATLAB
+datapath = 'D:\=data=\XINTRINSIC';
 % save('Data_126D_11reps.mat', 'DataMat', 'para', 'X', 'DataMat_norm')
-save('Data_96B_Nat_12reps.mat', 'DataMat', 'DataMat_norm', 'X', 'para', '-v7.3')
+save([datapath, '\DataMat_126D_Nat_11reps_mask.mat'], 'DataMat_mask', '-v7.3')
+save([datapath, '\DataProc_126D_Nat_11reps.mat'], 'X', 'para', '-v7.3')
+
 
 %% save as python format
 data = permute(DataMat_norm,[2,3,4,1]);
@@ -103,7 +106,7 @@ opt.fluo = 0;
 opt.method = 'mICA'; % 'mICA' or 'NMF'
 opt.nRows = 1;
 opt.plotON = 1;
-Ks = 1:10;
+Ks = 6;
 [Rs, Ws, comp, recon_error, X_hats] = runDecomp(X, Ks, opt, para);
 
 

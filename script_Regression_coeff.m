@@ -2,7 +2,7 @@
 % plot coefficients maps 
 % need: R (response matrix of each component), K (number of components)
 % load('D:\=code=\Sound_analysis\F_test.mat') 
-load('D:\=data=\F_halfcosine_marm.mat') 
+load('D:\SynologyDrive\=data=\F_halfcosine_marm.mat') 
 K = 10;
 R = Rs{10};
 

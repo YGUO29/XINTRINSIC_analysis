@@ -1,11 +1,11 @@
 function [I_inorder, R_inorder, tags_inorder, snames_inorder] = getResponseProfile(R,plot_on)
 % filelist = dir('\\10.16.58.229\Test_Procedures\==Slides & Documents\Music\naturalsounds165\naturalsounds165')
-folder_origin = 'D:\=code=\McdermottLab\sound_natural';
+folder_origin = 'D:\SynologyDrive\=code=\McdermottLab\sound_natural';
 list = dir(fullfile(folder_origin,'*.wav'));
 snames = natsortfiles({list.name})';
 
 % Load Sam's catagory labels directly
-load('D:\=code=\XINTRINSIC_analysis\category_regressors.mat')
+load('D:\SynologyDrive\=code=\XINTRINSIC_analysis\category_regressors.mat')
 tags = C.category_assignments; 
 nTags = max(tags);
 Color = C.colors;
