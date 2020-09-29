@@ -25,9 +25,9 @@ for i = 1:nPanels
     % for each repetition
     for j = 1:length(opt.reps)
         iRep = opt.reps(j);
-        img_base1 = squeeze(mean(mov(iRep,:,:,:,1:floor(para.fr*para.preStim)),5));
+        img_base1 = squeeze(mean(mov(j,:,:,:,1:floor(para.fr*para.preStim)),5)); %changed iRep to j within mov
         img_base1 = repmat(img_base1,1,1,para.nFrame);
-        mov_rel_sep(j,i,:,:,:) = squeeze(mov(iRep,:,:,:,:))./img_base1;
+        mov_rel_sep(j,i,:,:,:) = squeeze(mov(j,:,:,:,:))./img_base1;
     end
     
     mov_mean = squeeze(mean(mov,1)); % height x width x frames

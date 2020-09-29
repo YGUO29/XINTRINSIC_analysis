@@ -4,13 +4,7 @@ h = images.roi.Circle(gca,'Center',[floor(para.width/2) floor(para.height/2)],'R
 title('Press Enter after the position is adjusted')
 pause
 mask = createMask(h);
-%%
-figure,
-DataMat_test1 = squeeze(DataMat_norm(1,:,:,3:end)).*repmat(mask,1,1,348);
-plot(mean(reshape(DataMat_test1,75*120, 348), 1)), hold on
 
-DataMat_test2 = squeeze(DataMat_norm(2,:,:,1:end-2)).*repmat(mask,1,1,348);
-plot(mean(reshape(DataMat_test2,75*120, 348), 1))
 
 %% get sound features and category features
 nGroup = max(F.table.cat_number);
@@ -26,16 +20,6 @@ for i = 1:nGroup
     semilogx(F.cf_log,  coch_env_mean(:, i), 'color', F.C.colors(i,:)), hold on
 end
 legend(F.C.category_labels)
-%% get average coch_env
-coch_env_mean = zeros(size(F.coch_env, 1), 1);
-for i = 1:15
-    coch_env_mean = coch_env_mean + F.coch_env(:,ind_descend(i));
-end
-coch_env_mean = coch_env_mean ./ 15;
-figurex;
-semilogx(F.cf_log,  coch_env_mean./max(coch_env_mean)), hold on
-semilogx(F.cf_log,  mean(F_voc.coch_env, 2)./max(mean(F_voc.coch_env, 2)))
-
 
     
 %% calculate weight of cochlear envelope
@@ -48,3 +32,22 @@ end
 figurex; 
 hist(coch_weight)
     
+%% get average coch_env
+coch_env_top15 = zeros(size(F.coch_env, 1), 1);
+coch_env_voc = mean(F.coch_env(:,find(F.table.cat_number == 12)), 2);
+ct = 0;
+i = 1;
+while ct <= 15
+    if F.table.cat_number(ind_descend(i)) ~= 12
+        coch_env_top15 = coch_env_top15 + F.coch_env(:,ind_descend(i));
+        ct = ct + 1;
+    else
+    end
+    i = i + 1;
+end
+coch_env_top15 = coch_env_top15 ./ 15;
+figurex;
+semilogx(F.cf_log,  coch_env_voc), hold on
+semilogx(F.cf_log,  coch_env_top15), hold on
+
+legend({'15 voc', '15 Nat w/ highest center of mass'})

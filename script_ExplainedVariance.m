@@ -1,20 +1,22 @@
 % variance explained by components
-if isempty(opt.tWindow)
+opt.tWindow = [para.preStim, para.preStim + 12];
+if ~isfield(opt, 'tWindow')
     opt.tWindow = [para.preStim, para.preStim + para.durStim];
 end
 
 set_V = nchoosek(1:para.nRep,2);
 % set_V = [5 6];
 nPerm = size(set_V,1);
-result = zeros(10,2,nPerm);
-for K = 1:10
+result = zeros(para.nRep,2,nPerm);
+for K = 1:para.nRep
     for iPerm = 1:nPerm
+        % use the rest of the reps to calculate R and W
         opt.reps = setdiff(1:para.nRep, set_V(iPerm,:));
 %         opt.reps = datasample(1:para.nRep, para.nRep-2, 'replace', false);
 %         set_V = setdiff(1:para.nRep, opt.reps);
 %         ind_V = datasample(1:5, 2, 'replace', false);
 
-        X = getX(DataMat_mask, para, opt);
+        X = getX(DataMat, para, opt);
         RANDOM_INITS = 10;      
         PLOT_FIGURES = 0;
         [~, ind_delete]     = find( isnan(X) ); % linear index

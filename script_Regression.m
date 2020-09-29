@@ -1,18 +1,20 @@
 % variance explained by acoustic features and categories
 % Y: features to be regress against (165 x N)
 % z: response profile (165 x 1)
-load('D:\SynologyDrive\=code=\Sound_analysis\F_halfcosine_marm.mat')
-% load('D:\=code=\Sound_analysis\F_test.mat')
-load('D:\SynologyDrive\=code=\XINTRINSIC_analysis\category_regressors.mat')
+% load('D:\SynologyDrive\=code=\Sound_analysis\F_halfcosine_marm.mat')
+load('D:\SynologyDrive\=data=\F_halfcosine_marm_NatVoc.mat')
+% load('D:\SynologyDrive\=code=\XINTRINSIC_analysis\category_regressors.mat')
 % In structure F:
 % F_mat rows 1~9: frequency powers
 % F_mat rows 10~10+7*9-1 = 10~72: combined spectrotemporal modulation
 % powerd
 % F_mat rows 73~end: full spectrotemporal modulation power (including
 % negative and positive temporal rates)
-
 % In structure C:
-% category_assignments: 1~11 number labels for each sound
+% for NatVoc - category_regressors: 1/0 labels for each sound
+% for Nat (without voc) - continuous_Scores: 0~1, subject's rating
+
+
 Y_freq = F.F_mat(1 : F.nFreq,:)';
 Y_temp = F.F_mat(F.nFreq+1 : F.nFreq+F.nTemp,:)';
 Y_spec = F.F_mat(F.nFreq+F.nTemp+1 : F.nFreq+F.nTemp+F.nSpec,:)';
@@ -22,9 +24,10 @@ Y_mod_weighted = F.F_mat(F.nFreq+F.nTemp+F.nSpec+F.nSpectemp+1:end,:)';
 Y_mod = U(:,1:15);
 [U,S,V] = svd(Y_mod_weighted);
 Y_mod_weighted = U(:,1:15);
-% Y_cat = C.category_assignments; % this is wrong!!
-Y_cat = C.continuous_scores; % column number = predictor number, multiply by 100 to avoid regression error
-%... 
+
+% Y_cat = F.C.continuous_scores; % column number = predictor number, multiply by 100 to avoid regression error
+Y_cat = F.C.continuous_scores; % column number = predictor number, multiply by 100 to avoid regression error
+
 
 cmap = colormap(lines(7));
 
@@ -263,8 +266,9 @@ for i = [1:3, 5]
             feat = F.spec_mod_rates;
             cb_labels = arrayfun(@num2str,feat,'UniformOutput',false);
         case 5 % category
-            feat = 1:11;
-            cb_labels = C.category_labels;
+            cb_labels = F.C.category_labels;
+            feat = 1:length(cb_labels);
+
     end
       
     % ==== weighted average as a visualization measurement (negative coefficients problem!!)

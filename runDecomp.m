@@ -25,7 +25,7 @@ for k = 1:nK
     K = Ks(k); % k: the index; K: the #components   
     switch opt.method 
         case 'mICA' % modified ICA (Sam, 2015)
-            addpath('D:\=code=\McdermottLab\toolbox_nonparametric-ICA') % MAKE SURE
+            addpath('D:\SynologyDrive\=code=\McdermottLab\toolbox_nonparametric-ICA') % MAKE SURE
             % THIS FOLDER IS ON THE TOP OF THE PATH LIST IN MATLAB!!!!
             RANDOM_INITS = 10;      
             PLOT_FIGURES = 0;

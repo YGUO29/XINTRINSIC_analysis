@@ -1,8 +1,9 @@
 % registration with matlab function
 function XINTRINSIC_reg(DataMat, I, para, opt)
 
+% put all frames in a 3d matrix
 tic, DataMat = permute(DataMat,[3,4,5,2,1]); time.permute = toc % DataMat = [rep, trial, height, width, frams]
-tic, DataMat = DataMat(:,:,:,para.order,:); time.reorder = toc % re-arrange according to the experiment order
+tic, DataMat = DataMat(:,:,:,para.order,:); time.reorder = toc % re-arrange according to the experiment order, so that the time points are continuous
 Y = reshape(DataMat, para.height, para.width, para.nFrame*para.nStim*para.nRep); 
 
 if opt.mask

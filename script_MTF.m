@@ -4,7 +4,8 @@
 S.fm            = [0, 1/8, 1/4, 1/2, 1, 2, 4, 8];
 S.tm            = [1/2, 1, 2, 4, 8, 16, 32, 64];
 S.tm            = [fliplr(-S.tm), 0, S.tm]; % all frequencies
-
+nSM = length(S.fm);
+nTM = length(S.tm);
 nPix = size(X,2);
 MTF     = zeros(nSM,nTM,nPix);
 
@@ -32,12 +33,14 @@ MTF_mean = mean(MTF,3);
 
 %% plot all MTF for all pixels
 figurex([1440         351        1066         987]); 
-mm = prctile(MTF(:),100);
-h = imagesc(flipud(MTF(:,:,1)),[0 mm]); colormap(hot), colorbar, axis image
+imagesc(flipud(MTF_mean)); colormap(hot), colorbar, axis image
 set(gca,'XTickLabel',arrayfun(@num2str,TM(2:2:16),'UniformOutput',false))
 set(gca,'yTickLabel',arrayfun(@num2str,fliplr(SM),'UniformOutput',false))
 xlabel('Temporal Modulation Rate (Hz)')
 ylabel('Spectral Modulation Rate (Cyc/Oct)')
+pause
+mm = prctile(MTF(:),100);
+h = imagesc(flipud(MTF(:,:,1)),[0 mm]); colormap(hot), colorbar, axis image
 for i = 1:nPix
     % plot averaged MTF over pixels
     pause(0.01);
@@ -46,11 +49,11 @@ end
 
 %% plot component's response profile as MTF 
 % rearrange Rs to get MTF of each component
-K = 10;
-R = Rs{10};
+K = 6;
+R = Rs{1};
 figurex([1440         351        1066         987]); 
 for i = 1:K
-    subplot(2,5,i)
+    subplot(2,3,i)
     mm = prctile(R(:),100);
     MTF_temp = R(:,i); % select a pixel. rows of X: number of SM/TM parameters
     MTF_temp = reshape(MTF_temp, nTM, nSM)';
