@@ -1,0 +1,12 @@
+% registration across sessions / correct motion artifacts
+
+%% check alignment across sessions
+opt_reg.plotON = 1;
+opt_reg.th_prctile = 30; % define x percentile of total frames will not be registered (x% will be registered)
+tstart = tic;
+[Y, opt_reg] = getMotionMetric(DataMat, para, opt_reg);
+t_registration = toc(tstart);
+%% perform registration
+[DataMat_reg, Yreg] = XINTRINSIC_reg(Y, para, opt);
+
+

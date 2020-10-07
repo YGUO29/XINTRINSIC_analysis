@@ -22,7 +22,7 @@
     regopt = struct; 
     regopt.mode = 'auto'; % manual or auto
     regopt.manual_method = 'polynomial'; 
-    regopt.auto_method = 'multimodal';
+    regopt.auto_modality = 'multimodal';
     [img_tone_reg, img_exp, tform] = RegisterSurface(filename_tone, filename_exp, para, regopt);
     % [img_tone_reg, img_exp, tform] = RegisterSurface(para, regopt);
 

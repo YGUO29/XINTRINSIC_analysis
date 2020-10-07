@@ -26,7 +26,7 @@ if ~iscell(file_mat) % only load one file
             para.preStim =  S.TrlDurPreStim;
             para.durStim =  S.TrlDurStim;
             para.postStim = S.TrlDurPostStim;
-%             para.order =    S.SesTrlOrderVec;
+            para.order =    S.SesTrlOrderVec;
             DataMat =       P.ProcDataMat; % DataMat = [rep, trial, height, width, frams]
             para.filename = file_mat;
             para.pathname = path_mat;
@@ -54,7 +54,7 @@ else % load multiple files
         para.preStim =  S.TrlDurPreStim;
         para.durStim =  S.TrlDurStim;
         para.postStim = S.TrlDurPostStim;
-%         para.order(para.nRep+i,:) =    S.SesTrlOrderVec;
+        para.order(para.nRep+i,:) =    S.SesTrlOrderVec;
         DataMat =       P.ProcDataMat; % DataMat = [rep, trial, height, width, frams]
         para.filename = file_mat;
         para.pathname = path_mat;
@@ -78,7 +78,8 @@ opt = struct;
 
 % get data matrix X and view the video
     opt.ampLimit    = 0.1.*[-1 1];
-%     opt.tWindow     = [para.preStim, para.preStim + 16]; % intrinsic natural sound: prestim+16s
+%     opt.trials = 1:15; 
+    opt.tWindow     = [para.preStim, para.preStim + 16]; % intrinsic natural sound: prestim+16s
 %     opt.p           = [8, 17]; % subplot rows and columes; 
 %     opt.mode        = 'allrep';
 %     opt.saveON      = 1;
@@ -93,13 +94,11 @@ X(:, ind_delete)    = [];
 %% save MATLAB
 datapath = 'D:\SynologyDrive\=data=\XINTRINSIC';
 % save('Data_126D_11reps.mat', 'DataMat', 'para', 'X', 'DataMat_norm')
-save([datapath, '\DataMat_80Z_Nat_10reps.mat'], 'DataMat', 'para', '-v7.3')
+save([datapath, '\DataMat_102D_NatVoc_12reps.mat'], 'DataMat', 'para', '-v7.3')
 
-save([datapath, '\DataMatNorm_80Z_Nat_10reps.mat'], 'DataMat_norm', 'para', '-v7.3')
+save([datapath, '\DataMatNorm_102D_Nat_10reps.mat'], 'DataMat_norm', 'para', '-v7.3')
 
 save([datapath, '\DataProc_96B_Ripple_25reps.mat'], 'X', 'para', '-v7.3')
-
-
 %% save as python format
 data = permute(DataMat_norm,[2,3,4,1]);
 save(['python_', file_mat], 'data')
@@ -109,31 +108,28 @@ opt.fluo = 0;
 opt.method = 'mICA'; % 'mICA' or 'NMF'
 opt.nRows = 1;
 opt.plotON = 1;
-Ks = 6;
+Ks = 7;
 [Rs, Ws, comp, recon_error, X_hats] = runDecomp(X, Ks, opt, para);
+%% visualize X hats
+i = 4;
+figure, 
+subplot(1,3,1), imagesc(reshape(X(i, :), para.height, para.width)), axis image
+subplot(1,3,2), imagesc(reshape(X_mask(i, :), para.height, para.width)), axis image
+subplot(1,3,3), imagesc(reshape(-X_hats{7}(i, :), para.height, para.width)), axis image
 
+% for k = 1:8
+%     recon_error_mask(k) = norm((1-M).*(X - X_hats{k}), 'fro');
+% end
+% figure, plot(recon_error_mask)
 
+%% generage a mask for cross-validation
+M = double(rand(size(X)) > 0.1);
+X_mask = X.*M;
 %%  Variance across reps 1
 opt = struct;
 opt.ampLimit    = [0 98]; % the percentile of the data distribution as upper limit
 opt.tWindow     = [4 5];
 Var = getVarMap(para,DataMat,opt);
-%% check alignment across sessions
-test_frames = DataMat(:, [1 20 30], :,:,:);
-test_frames = permute(test_frames,[3,4,1,2,5]);
-Y = reshape(test_frames, [para.height, para.width, size(test_frames,3)*size(test_frames,4)*size(test_frames,5)]); 
-figure,
-for i = 1:2000
-    imshow(Y(:,:,i),[]),title(num2str(i))
-    pause(0.1)
-end
-Y = Y - min(Y(:));
-nnY = quantile(Y(:),0.005);
-mmY = quantile(Y(:),0.995);
-[cY,mY,~] = motion_metrics(Y,5); % cY: correlation coefficients between frames
-t = 1:size(test_frames,3)*size(test_frames,4)*size(test_frames,5);
-figure,
-plot(t, cY), xlim([0, max(t)]), ylim([min(cY), 1]), title('Original')
 
 %% ============== Generate a mask for component analysis ==============
 %======== masks drawn manually ========
@@ -243,14 +239,14 @@ for iComp = 1
 end
 
 %% plot temporal trace
-ampLimit = [-5 5];
+ampLimit = 15.*[-1 1];
 Stim = 1;
 
 [p,~] = numSubplots(length(Stim));
 figure,
 for i = 1:length(Stim)
 %     iStim = Stim(i);
-    iStim = 12;
+    iStim = 50;
     subplot(p(1), p(2), i)
     Data_temp       = 100.*reshape( DataMat_norm(iStim,:,:,:), para.height*para.width, para.nFrame );
     t = 1/para.fr: 1/para.fr: (para.preStim + para.durStim + para.postStim);
