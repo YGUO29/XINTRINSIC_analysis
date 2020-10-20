@@ -1,12 +1,12 @@
-function [I_inorder, R_inorder, tags_inorder, snames_inorder] = getResponseProfile(R,plot_on)
+function [I_inorder, R_inorder, tags_inorder, snames_inorder] = getResponseProfile_NatVoc(R,plot_on)
 % filelist = dir('\\10.16.58.229\Test_Procedures\==Slides & Documents\Music\naturalsounds165\naturalsounds165')
-folder_origin = 'D:\SynologyDrive\=code=\McdermottLab\sound_natural';
+folder_origin = 'D:\SynologyDrive\=sounds=\Natural sound\Natural_JM_XINTRINSIC_withLZVoc_200909\Norm';
 list = dir(fullfile(folder_origin,'*.wav'));
 snames = natsortfiles({list.name})';
 
 % Load Sam's catagory labels directly
-load('D:\SynologyDrive\=data=\category_regressors.mat')
-
+load('D:\SynologyDrive\=data=\category_regressors_withLZvoc.mat')
+C = C_voc;
 tags = C.category_assignments; 
 nTags = max(tags);
 Color = C.colors;
@@ -32,8 +32,7 @@ tags_inorder = R;
 snames_inorder = cell(size(tags_inorder));
 % close all
 if plot_on; 
-    figure; 
-    set(gcf,'color','w')
+    figurex; 
 end
 % ind = [3 2 4 6 5 1]; % for 80Z
 % ind = [4 2 3 5 1 6]; % for 132D, session 2
@@ -50,8 +49,8 @@ for i = 1:length(ind)
             b = bar(resp,'FaceColor','flat');
             title(['Component ',num2str(i)],'fontsize',16)
             b.CData = Color_inorder;
-            ylim([-0.5 2.5]), xlim([1 165])
-            xticks([1 165])
+            ylim([-0.5 2.5]), xlim([1 size(R,1)])
+            xticks([1 size(R,1)])
             set(gca,'fontsize',24)
             axis square
 

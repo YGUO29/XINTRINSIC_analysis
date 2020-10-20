@@ -1,11 +1,15 @@
-function [Y, cY, opt] = getMotionMetric(DataMat, para, opt)
+function [output, opt] = getMotionMetric(DataMat, para, opt)
 addpath(genpath('D:\SynologyDrive\=code=\FANTASIA-NoRMCorre'));
 
-% put all frames in a 3d matrix: Y
-tic, frames = permute(DataMat,[3,4,5,2,1]); time.permute = toc % DataMat = [rep, trial, height, width, frams]
-% frames = [height, width, frames, trial, rep]
-tic, frames = frames(:,:,:,para.order,opt.reps); time.reorder = toc % re-arrange according to the experiment order, so that the time points are continuous
-Y = reshape(frames, para.height, para.width, para.nFrame*para.nStim*length(opt.reps)); 
+if length(size(DataMat)) == 5
+    % put all frames in a 3d matrix: Y
+    frames = permute(DataMat,[3,4,5,2,1]);% DataMat = [rep, trial, height, width, frams]
+    % re-arrange according to the experiment order, so that the time points are continuous
+    frames = frames(:,:,:, para.order, opt.reps); % frames = [height, width, frames, trial, rep]
+    Y = reshape(frames, para.height, para.width, para.nFrame*para.nStim*length(opt.reps)); 
+else % for registering across sessions
+    Y = DataMat;
+end
 
 % test a few frames
 % frames = DataMat(:, [1 80 180], :,:,:);
@@ -48,4 +52,9 @@ if opt.plotON
 end
 
 opt.ind_reg = find(cY < opt.cY_threshold);
+
+%%
+output.Y = Y;
+output.cY = cY;
+output.mY = mY;
 end

@@ -21,6 +21,9 @@ if ~opt.fluo
 else
 end
 
+% figurex;
+% ha = tight_subplot(max(Ks), max(Ks), [.01 .01],[.1 .01],[.01 .01]);
+
 for k = 1:nK
     K = Ks(k); % k: the index; K: the #components   
     switch opt.method 
@@ -56,14 +59,16 @@ for k = 1:nK
 
         % plot components
         for i = 1:K
-            cutoff = 0.08;
+            cutoff = 0.05;
             cutoff = mean(W{k}(ind(i),:)) + 7*std(W{k}(ind(i),:)); % variable cutoff values for each components
             comp_temp = zeros(para.height, para.width);
             comp_temp(para.ind_save) = W{k}(ind(i),:);
             % ============= plot components only =============
             %     mask_temp = double(~mask_outline_reg);
             %     mask_temp(mask_temp == 0) = -inf;
-            axes(ha(i)); imagesc(comp_temp,cutoff.*[-1 1]),axis image, colormap(jet)
+%             axes(ha(i)); 
+            axes(ha(i+(k-1)*max(Ks)));
+            imagesc(comp_temp,cutoff.*[-1 1]),axis image, colormap(jet)
             comp{k}(:, :, i) = comp_temp;
             drawnow;
             colorbar;

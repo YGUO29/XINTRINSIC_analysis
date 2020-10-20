@@ -7,7 +7,7 @@ load(fullfile(path_mat,file_mat));clc
 % Sys = load(fullfile(path_mat,[nametemp(1:end-3),'.mat']));
 file_parts = strsplit(file_mat,{'_','.'});
 ind = find(strcmp(file_parts,'P1'));
-nametemp = strjoin(file_parts(1:ind-1),'_');
+nametemp = strjoin(file_parts(1:ind-2),'_');
 load(fullfile(path_mat,[nametemp,'.mat']));
 
 % I = double(imresize(I,1/16));
@@ -71,7 +71,7 @@ if contains(nametemp,'Fluo')
     data_temp       = squeeze(DataMat);
 else
     para.modality = 'intrinsic';
-    delay = 3.5;
+    delay = 2.6;
     data_temp       = -squeeze(DataMat); 
 end
 

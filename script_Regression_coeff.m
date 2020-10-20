@@ -5,7 +5,7 @@
 % load('D:\SynologyDrive\=data=\F_halfcosine_marm.mat') 
 load('D:\SynologyDrive\=data=\F_halfcosine_marm_NatVoc.mat') 
 
-K = 7;
+K = 15;
 R = Rs{1};
 
 %%
