@@ -60,6 +60,7 @@ if strcmp(opt.mode, 'rigid')
         'max_shift',    10,...
         'us_fac',       20,...
         'init_batch',   200,...
+        'mem_batch_size', 200,...
         'correct_bidir',0); % do not perform bi-directional scanning correction (avoid zigzag artifact)
 
     % perform motion correction
@@ -162,10 +163,10 @@ figure;
 %%
 if opt.regreps % register mean images of repetitions, skip DataMat step
 else
+%     DataMat_temp = reshape(Yreg_new, para.height, para.width, para.nFrame, para.nStim, length(opt.reps));
     DataMat_temp = reshape(Yreg, para.height, para.width, para.nFrame, para.nStim, length(opt.reps));
-    %     DataMat_reg = reshape(Yreg, para.height, para.width, para.nFrame, para.nStim, length(opt.reps));
-    [~,ind] = sort(para.order);
-    tic, DataMat_temp = DataMat_temp(:,:,:,ind,:); tReorder = toc % re-arrange according to the experiment order
+%     [~,ind] = sort(para.order);
+%     tic, DataMat_temp = DataMat_temp(:,:,:,ind,:); tReorder = toc % re-arrange according to the experiment order
     tic, DataMat_temp = permute(DataMat_temp,[5, 4, 1, 2, 3]); tPermute = toc % DataMat_reg = [height, width, frames, trial, rep]
     output.DataMat_temp  = DataMat_temp;
 end

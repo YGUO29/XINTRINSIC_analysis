@@ -5,7 +5,9 @@ if length(size(DataMat)) == 5
     % put all frames in a 3d matrix: Y
     frames = permute(DataMat,[3,4,5,2,1]);% DataMat = [rep, trial, height, width, frams]
     % re-arrange according to the experiment order, so that the time points are continuous
-    frames = frames(:,:,:, para.order, opt.reps); % frames = [height, width, frames, trial, rep]
+%     frames = frames(:,:,:, para.order, opt.reps); % frames = [height,
+%     width, frames, trial, rep] %(ERROR: para.order does not change for each repetition, not necessary)
+    frames = frames(:,:,:, :, opt.reps); % frames = [height, width, frames, trial, rep] 
     Y = reshape(frames, para.height, para.width, para.nFrame*para.nStim*length(opt.reps)); 
 else % for registering across sessions
     Y = DataMat;
@@ -40,7 +42,8 @@ opt.cY_threshold = prctile(cY, opt.th_prctile);
 if opt.plotON
     % plot correlation coefficients
     figurex;
-    t = 1:size(frames,3)*size(frames,4)*size(frames,5);
+%     t = 1:size(frames,3)*size(frames,4)*size(frames,5);
+    t = 1:size(Y, 3);
     plot(t, cY), xlim([0, max(t)]), ylim([min(cY), 1]), title('Original')
     % plot histogram and motion correction threshold of correlation coefficients
     figurex; 

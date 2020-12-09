@@ -6,7 +6,7 @@ para.nRep = 0;
 % 132D Calcium 1: file_mat = '190119T114434_Blue_Koehler_Fluo_GFP_P1.mat';
 % 132D Calcium 2: file_mat = '190224T095545_Blue_Koehler_Fluo_GFP_P1.mat';
 %% add more repetitions
-[file_mat,path_mat] = uigetfile('*.mat','Select a mat file to analyze','X:\', 'Multiselect', 'on');
+[file_mat,path_mat] = uigetfile('*.mat','Select a mat file to analyze','U:\', 'Multiselect', 'on');
 
 if ~iscell(file_mat) % only load one file
         load(fullfile(path_mat,file_mat));
@@ -43,14 +43,14 @@ else % load multiple files
         nametemp = strjoin(file_parts(1:ind-2),'_');
         load(fullfile(path_mat,[nametemp,'.mat']));
 
-    if para.nRep + i == 1 % read the initial file
+    if para.nRep + i == 1 % read the initial file, initialize parameters
     %     para.nRep =     size(P.ProcDataMat,1);
         para.nStim =    size(P.ProcDataMat,2);
         para.height =   size(P.ProcDataMat,3);
         para.width =    size(P.ProcDataMat,4);
         para.nFrame =   size(P.ProcDataMat,5);
-
         para.fr =       P.ProcFrameRate; % frame rate
+        
         para.preStim =  S.TrlDurPreStim;
         para.durStim =  S.TrlDurStim;
         para.postStim = S.TrlDurPostStim;
@@ -73,41 +73,63 @@ opt = struct;
 % get data matrix X directly
 %     opt.trials = 162; 
 %     opt.reps = ;
-%     opt.tWindow     = [para.preStim, para.preStim + 18]; % start and end of integration window for calculating response amplitude
-% [X, DataMat_norm] = getX(DataMat, para, opt);
+%     opt.tWindow     = [para.preStim, para.preStim + para.durStim + 4]; % start and end of integration window for calculating response amplitude
+% [X, DataMat_norm, ~] = getX(DataMat, para, opt);
 
 % get data matrix X and view the video
-    opt.ampLimit    = 0.1.*[-1 1];
-%     opt.trials = ind(16:30); 
-    opt.tWindow     = [para.preStim, para.preStim + para.durStim + 4]; % intrinsic natural sound: integrate until 4s after sound offset
-%     opt.p           = [8, 17]; % subplot rows and columes; 
+    opt.ampLimit    = 0.003 .*[-1 1];
+%     opt.reps = [1:11+3, 11+6:para.nRep];
+%     opt.trials = 6; 
+%     opt.omit_trials = [12 16 30 36 48 48 16 16];
+%     opt.omit_reps = [1 1 1 1 1 5 7 10];
+    opt.tWindow     = [para.preStim + 4, para.preStim + para.durStim]; % intrinsic natural sound: integrate until 4s after sound offset
+%     opt.p           = [8, 6]; % subplot rows and columes; 
 %     opt.mode        = 'allrep';
+%     opt.plotMode = 'separate';
 %     opt.saveON      = 1;
 %     opt.soundON     = 1;
-%     para.pathname = 'E:\OneDrive - Johns Hopkins\temp\NatSound Videos\';
+%     para.pathname = 'D:\SynologyDrive\=data=\Marmoset_imaging\video_wf\';
+    
     figurex;
     [X, DataMat_norm] = ViewData(DataMat, para, opt); % X may contain NaNs if there are masked pixels
 % ======== construct a X without NaN ========
 [~, ind_delete]     = find( isnan(X) ); % linear index
 para.ind_save       = setdiff(1:para.width*para.height, ind_delete);
 X(:, ind_delete)    = [];
-%% save MATLAB
+%%
+X2 = X(2:2:360,:);
+X1 = X(1:2:359,:);
+temp = mean(X1 - X2, 1);
+Max = max(abs(temp))/2;
+figure, imagesc(reshape(temp, para.height, para.width), [-Max, Max]), 
+axis image, colormap(jet)
+%% save MATLAB files
+animal = '9G'; 
+session = 'CI';
+modal = 'Intrinsic';
+date = '201201';
 datapath = 'D:\SynologyDrive\=data=\XINTRINSIC';
-% save('Data_126D_11reps.mat', 'DataMat', 'para', 'X', 'DataMat_norm')
-save([datapath, '\DataMat_reg_102D_NatVoc_12reps.mat'], 'DataMat_reg', 'para', '-v7.3')
-% save([datapath, '\DataMatNorm_102D_NatVoc_12reps.mat'], 'DataMat_norm', 'para', '-v7.3')
-% save([datapath, '\DataProc_102D_NatVoc_12reps.mat'], 'X', 'para', '-v7.3')
+% save([datapath, '\', animal, '\DataMatReg_', animal, '_', session, '_', num2str(para.nRep), 'reps.mat'],...
+%     'DataMat_reg', 'para', '-v7.3')
+save([datapath, '\', animal, '\DataMat_', modal, '_', date, '_', animal, '_', session, '_', num2str(para.nRep), 'reps.mat'],...
+    'DataMat', 'para', '-v7.3')
+save([datapath, '\', animal, '\DataMatNorm_', modal, '_', date, '_', animal, '_', session, '_', num2str(para.nRep), 'reps.mat'],...
+    'DataMat_norm', 'para', '-v7.3')
+save([datapath, '\', animal, '\DataMatProc_', modal, '_', date, '_', animal, '_', session, '_', num2str(para.nRep), 'reps.mat'],...
+    'X', 'para', '-v7.3')
 %% save as python format
 data = permute(DataMat_norm,[2,3,4,1]);
 save(['python_', file_mat], 'data')
 
 %% run decomposition in MATLAB
-opt.fluo = 0; 
-opt.method = 'NMF'; % 'mICA' or 'NMF'
+opt.fluo = 1; 
+opt.method = 'mICA'; % 'mICA' or 'NMF'
 opt.nRows = 1;
-opt.plotON = 0;
-Ks = 1:30;
-[Rs, Ws, comp, recon_error, X_hats] = runDecomp(X, Ks, opt, para);
+opt.plotON = 1;
+Ks = 6;
+
+% opt.X_test = X_test;
+[Rs, Ws, comp, recon_error, X_hats] = runDecomp(X2, Ks, opt, para);
 %% get response profiles for components
 R = Rs{1};
 plot_on = 1;

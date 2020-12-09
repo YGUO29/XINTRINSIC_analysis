@@ -1,6 +1,24 @@
 function [X, mov_rel] = ViewData(DataMat, para, opt)
 % DataMat = [rep, trial, height, width, frams]
 
+% demo usage:
+%     opt.ampLimit    = 0.003 .*[-1 1];
+%     opt.reps = [1:11+3, 11+6:para.nRep];
+%     opt.trials = 6; 
+%     opt.omit_trials = [12 16 30 36 48 48 16 16];
+%     opt.omit_reps = [1 1 1 1 1 5 7 10];
+%     opt.tWindow     = [para.preStim + 4, para.preStim + para.durStim]; % intrinsic natural sound: integrate until 4s after sound offset
+%     opt.p           = [8, 6]; % subplot rows and columes; 
+%     opt.mode        = 'allrep'; % allrep or avgrep
+%     opt.plotMode    = 'combined'; % combined or separate
+%     opt.saveON      = 1;
+%     opt.soundON     = 1;
+%     para.pathname = 'D:\SynologyDrive\=data=\Marmoset_imaging\video_wf\';
+    
+    figurex;
+    [X, DataMat_norm] = ViewData(DataMat, para, opt); % X may contain NaNs if there are masked pixels
+    
+% ====================================================
 if ~isfield(opt, 'reps')
     opt.reps = 1:para.nRep;
 end
@@ -25,7 +43,12 @@ end
 if ~isfield(opt, 'soundON')
     opt.soundON     = 0; % save the sound for this recording as well
 end
-
+%% throw out moving trials
+if isfield(opt, 'omit_trials') || isfield(opt, 'omit_reps')
+    for i = 1:length(opt.omit_trials)
+        DataMat(opt.omit_reps(i), opt.omit_trials(i), :, :, :) = NaN;
+    end
+end
 
 %% generate matrix of movies, for different display mode
 if strcmp(opt.mode,'avgrep')
@@ -38,13 +61,13 @@ if strcmp(opt.mode,'avgrep')
         iTrial = opt.trials(i);
         mov = DataMat(opt.reps,iTrial,:,:,:);
         % average across reps
-        mov_mean = squeeze(mean(mov,1));
+        mov_mean = squeeze(mean(mov, 1, 'omitnan'));
         % calculate deltaF/F (movie)
-        img_base = squeeze(mean(mov_mean(:,:,1:floor(para.fr*para.preStim)),3)); % pre-stimulus: baseline
+        img_base = squeeze(mean(mov_mean(:,:,1:floor(para.fr*para.preStim)), 3, 'omitnan')); % pre-stimulus: baseline
         img_base = repmat(img_base,1,1,para.nFrame);
         mov_rel(i,:,:,:) = (mov_mean - img_base)./img_base;
         % calculate deltaF/F (averaged image)
-        img_rel(i,:,:) = squeeze(mean(mov_rel(i,:,:,floor(para.fr*opt.tWindow(1))+1 : floor(para.fr*opt.tWindow(2))),4));  
+        img_rel(i,:,:) = squeeze(mean(mov_rel(i,:,:,floor(para.fr*opt.tWindow(1))+1 : floor(para.fr*opt.tWindow(2))),4, 'omitnan'));  
         
     end
     X = reshape(img_rel, nPanels, para.width*para.height);
@@ -68,19 +91,19 @@ elseif strcmp(opt.mode,'allrep')
     img_rel = zeros(length(opt.reps)+1, para.height, para.width); % response mean image for each rep; the last one is averaged
     for i = 1:length(opt.reps)
         mov_temp = squeeze(mov(i,:,:,:)); % 75 x 120 x 25
-        img_base = squeeze(mean(mov_temp(:,:,1:floor(para.fr*para.preStim)),3)); % pre-stimulus: baseline
+        img_base = squeeze(mean(mov_temp(:,:,1:floor(para.fr*para.preStim)),3, 'omitnan')); % pre-stimulus: baseline
 %         img_base = squeeze(mean(mov_temp(:,:,5*para.fr:end),3));         
         img_base = repmat(img_base,1,1,para.nFrame);
         mov_rel(i,:,:,:) = (mov_temp - img_base)./img_base;
-        img_rel(i,:,:) = mean(mov_rel(i,:,:,floor(para.fr*opt.tWindow(1))+1 : floor(para.fr*opt.tWindow(2))),4);
+        img_rel(i,:,:) = mean(mov_rel(i,:,:,floor(para.fr*opt.tWindow(1))+1 : floor(para.fr*opt.tWindow(2))),4, 'omitnan');
     end
     
      % ==== calculate mean movie, put it after all reps ==== 
-    mov_mean = squeeze(mean(mov)); %averaged across reps, height x width x frames
-    img_base = squeeze(mean(mov_mean(:,:,1:floor(para.fr*para.preStim)),3));
+    mov_mean = squeeze(mean(mov, 'omitnan')); %averaged across reps, height x width x frames
+    img_base = squeeze(mean(mov_mean(:,:,1:floor(para.fr*para.preStim)),3, 'omitnan'));
     img_base = repmat(img_base,1,1,para.nFrame);
     mov_rel(i+1,:,:,:) = (mov_mean - img_base)./img_base;
-    img_rel(i+1,:,:) = mean(mov_rel(i+1,:,:,floor(para.fr*opt.tWindow(1))+1 : floor(para.fr*opt.tWindow(2))),4);
+    img_rel(i+1,:,:) = mean(mov_rel(i+1,:,:,floor(para.fr*opt.tWindow(1))+1 : floor(para.fr*opt.tWindow(2))),4, 'omitnan');
     X = reshape(img_rel, nPanels, para.width*para.height);
     
     fnametemp = para.filename;
@@ -93,12 +116,12 @@ switch opt.plotMode
     case 'combined'
     if opt.saveON
         if opt.soundON % video with sound
-            folder_sound = 'D:\=code=\McdermottLab\sound_natural\modified_5s\';
-            list = dir(fullfile(folder_sound,'*.wav'));
-            names_sound = natsortfiles({list.name})';
-            [sounddata,fs] = audioread(fullfile(folder_sound,names_sound{opt.trials})); 
-%             [file,path] = uigetfile('*.wav','Select the sound file','\\FANTASIA-DS3617\Test_Imaging\=Sounds=');
-%             [sounddata,fs] = audioread(fullfile(path,file)); 
+%             folder_sound = 'D:\=code=\McdermottLab\sound_natural\modified_5s\';
+%             list = dir(fullfile(folder_sound,'*.wav'));
+%             names_sound = natsortfiles({list.name})';
+%             [sounddata,fs] = audioread(fullfile(folder_sound,names_sound{opt.trials})); 
+            [file,path] = uigetfile('*.wav','Select the sound file','D:\SynologyDrive\=sounds=\');
+            [sounddata,fs] = audioread(fullfile(path,file)); 
             videoFWriter = vision.VideoFileWriter(vnametemp,...
             'FileFormat',       'AVI',...
             'AudioInputPort',   true,...
@@ -157,7 +180,6 @@ switch opt.plotMode
         set(h,'CData',mov_all)
         title(['time = ',num2str(i*(1./para.fr),'%-5.1f')])
         pause(1/para.fr)
-%             pause
 
         if opt.saveON   
             mov_all =       repelem(mov_all, 2, 2);% ......... for better video effect
@@ -227,17 +249,24 @@ switch opt.plotMode
         
         release(videoFWriter) 
     end
+    
  %% plot separately, cannot save videos
     case 'separate'
     % show movie as separate matrices (the last is the averaged across reps)
     switch opt.mode
         case 'allrep'
-        [p,n] = numSubplots(nPanels);
+        if ~isfield(opt, 'p')
+            [p,n] = numSubplots(nPanels); 
+        else
+            p = opt.p;
+            n = p(1)*p(2);
+        end
+        
         figure,
         for iRep = 1:nPanels
             temp = squeeze(mov_rel(iRep,:,:,:));
             subplot(p(1),p(2),iRep); 
-            h(iRep) = imagesc(temp(:,:,1),opt.ampLimit);colorbar;
+            h(iRep) = imagesc(temp(:,:,1),opt.ampLimit); colorbar; colormap('jet'); 
             axis image
             if iRep == nPanels
                 title('Averaged across reps')
@@ -270,12 +299,10 @@ switch opt.plotMode
             end
             pause(1/para.fr)
         end    
-        
     end
 end
     
 end
-
 
 % ===========================================
 % reference code is from Xindong Song (for saving video with audio)

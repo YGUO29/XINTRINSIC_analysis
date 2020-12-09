@@ -18,6 +18,7 @@ recon_error = zeros(1, nK);
 % results for mICA)
 if ~opt.fluo 
     X = -X;
+    if isfield(opt, 'X_test'); opt.X_test = -opt.X_test; end
 else
 end
 
@@ -34,14 +35,26 @@ for k = 1:nK
             PLOT_FIGURES = 0;
             % ========= reverse the sign for X for intrinsic imaging ========
             tic,[R{k}, W{k}] = nonparametric_ica(X, K, RANDOM_INITS, PLOT_FIGURES);toc
-            X_hat{k} = R{k} * W{k};
-            recon_error(k) = norm(X - X_hat{k}, 'fro');
+%             X_hat{k} = R{k} * W{k};
+            if isfield(opt, 'X_test')
+                X_test = opt.X_test;
+            else
+                X_test = X;
+            end
+            X_hat{k} = (R{k} / (R{k}' * R{k}))* R{k}' * X_test;
+            recon_error(k) = norm(X_test - X_hat{k}, 'fro');
         case 'NMF'
             X_pos = X - min(X(:));
             options = statset('Maxiter',200);
             [R{k}, W{k}] = nnmf(X_pos, K, 'options', options);
-            X_hat{k} = R{k} * W{k};
-            recon_error(k) = norm(X_pos - X_hat{k}, 'fro');
+%             X_hat{k} = R{k} * W{k};
+            if isfield(opt, 'X_test')
+                X_test = opt.X_test - min(opt.X_test(:));
+            else
+                X_test = X_pos;
+            end
+            X_hat{k} = (R{k} / (R{k}' * R{k}))* R{k}' * X_test;
+            recon_error(k) = norm(X_test - X_hat{k}, 'fro');
     end
     
     
@@ -59,15 +72,15 @@ for k = 1:nK
 
         % plot components
         for i = 1:K
-            cutoff = 0.05;
+            cutoff = 0.02;
             cutoff = mean(W{k}(ind(i),:)) + 7*std(W{k}(ind(i),:)); % variable cutoff values for each components
             comp_temp = zeros(para.height, para.width);
             comp_temp(para.ind_save) = W{k}(ind(i),:);
             % ============= plot components only =============
             %     mask_temp = double(~mask_outline_reg);
             %     mask_temp(mask_temp == 0) = -inf;
-%             axes(ha(i)); 
-            axes(ha(i+(k-1)*max(Ks)));
+            axes(ha(i)); 
+%             axes(ha(i+(k-1)*max(Ks)));
             imagesc(comp_temp,cutoff.*[-1 1]),axis image, colormap(jet)
             comp{k}(:, :, i) = comp_temp;
             drawnow;

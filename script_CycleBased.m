@@ -32,7 +32,6 @@ para.pathname = path_mat;
 DataMat =       P.ProcDataMat;
 
 % load stimulus information
-% if contains(Sys.S.SesSoundFile, 'DMR')
 if contains(S.SesSoundFile, 'DMR') | contains(S.SesSoundFile, 'DRM')
     [file_mat,path_mat] = uigetfile('*.mat','Select a mat file to analyze','D:\=sounds=\DMR');
     load(fullfile(path_mat,file_mat));
@@ -44,8 +43,14 @@ end
 % if contains(lower(Sys.S.SesSoundFile), 'down')
 if contains(lower(S.SesSoundFile), 'down')
     para.direction = 'down';
-else
+%     para.tonotopy = 1;
+elseif contains(lower(S.SesSoundFile), 'up')
     para.direction = 'up';
+%     para.tonotopy = 1;
+else 
+    para.direction = [];
+
+%     para.tonotopy = 0;
 end
 
 para.durStim = para.preStim + para.postStim + para.durStim;
@@ -55,8 +60,8 @@ para.postStim = 0;
 clear Sys P
 size(DataMat)
 
-%% View data
-opt.ampLimit    = 0.02.*[-1, 1];
+%% View data (averaged, within one period)
+opt.ampLimit    = 0.05.*[-1, 1];
 opt.saveON      = 0; 
 opt.soundON     = 0;
 ViewData_raw(-DataMat, para, opt);
@@ -71,32 +76,34 @@ if contains(nametemp,'Fluo')
     data_temp       = squeeze(DataMat);
 else
     para.modality = 'intrinsic';
-    delay = 2.6;
+    delay = 3.6;
     data_temp       = -squeeze(DataMat); 
 end
+
 
 % select the frequency component to be analyzed 
 if para.tonotopy
     period          = para.preStim + para.durStim + para.postStim;
     rep             = para.nRep;
 else
-%     period          = S.tm_period; 
-%     rep             = S.tm_cycles;
-    period = 19;
-    rep = 23;
+    period          = S.tm_period; 
+    rep             = S.tm_cycles;
+%     period = para.durStim;
+%     rep = para.nRep;
 end
 
 % concatenate repetitions (total frames x total #pixs)
-if para.nRep == 1
+if para.nRep == 1 
     data_temp   = permute(data_temp,[3 1 2]);
 else
     data_temp   = permute(data_temp,[4 1 2 3]);
 end
+
 data_mean       = squeeze(mean(data_temp,1));
 nPix            = para.height*para.width;
 data_temp       = reshape(data_temp,[para.nRep*para.nFrame, para.height*para.width]);
 
-% average for all pixels
+%% average for all pixels
 data_temp_mean  = mean(data_temp,2);
 % Max             = max(data_temp_mean) + 3*std(data_temp_mean);
 % Min             = 2*mean(data_temp_mean) - Max; 
@@ -176,6 +183,7 @@ if plotON
     % ========== plot average spectrum ==========
     subplot(2,4,5)
     semilogx(f(2:end),data_fftamp_mean(2:end)), xlim([0 1])
+    % label the frequency component looking at
     if para.tonotopy
         ind = floor(interp1(f,1:length(f),1/period));
         hold on, scatter(f(ind), data_fftamp_mean(ind))

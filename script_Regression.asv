@@ -203,14 +203,14 @@ Coef = cell(1,6);
 for i = 1:6
     switch i 
         case 1
-%             Y = [ones(size(Y_cat)), Y_temp, Y_spec]; % delete feature of interest
-            Y = [ones(nStim,1), Y_freq]; 
+            Y = [ones(size(Y_cat)), Y_temp, Y_spec]; % delete feature of interest
+%             Y = [ones(nStim,1), Y_freq]; 
         case 2
-%             Y = [ones(size(Y_cat)), Y_freq, Y_spec]; 
-            Y = [ones(nStim,1), Y_temp]; 
+            Y = [ones(size(Y_cat)), Y_freq, Y_spec]; 
+%             Y = [ones(nStim,1), Y_temp]; 
         case 3
-%             Y = [ones(size(Y_cat)), Y_freq, Y_temp];      
-            Y = [ones(nStim,1), Y_spec];      
+            Y = [ones(size(Y_cat)), Y_freq, Y_temp];      
+%             Y = [ones(nStim,1), Y_spec];      
         case 4
             Y = [ones(nStim,1), Y_freq, Y_mod];  
         case 5
@@ -244,19 +244,19 @@ for i = 1:6
             z = X(:, ind(k));
             
             % ==== regular regression ====
-%             [b,~,~,~,stats] = regress(z, Y); 
-%             % stats: R-squared, F-stat, p-value, error variance
-%             Corr(k,i) = stats(1);
-%             Coef{i}(k,:) = b';
+            [b,~,~,~,stats] = regress(z, Y); 
+            % stats: R-squared, F-stat, p-value, error variance
+            Corr(k,i) = stats(1);
+            Coef{i}(k,:) = b';
 
             % ==== lasso regression ====
-            [B, FitInfo] = lasso(Y, z,'CV', 3);
-            b = B(:, FitInfo.Index1SE); % IndexMinMSE or Index1SE
-            b0 = FitInfo.Intercept(FitInfo.Index1SE);
-            zpredict = Y*b + b0;
-            rr = corrcoef(zpredict, z);
-            Corr(k,i) = rr(1,2);
-            Coef{i}(k,:) = b';
+%             [B, FitInfo] = lasso(Y, z,'CV', 3);
+%             b = B(:, FitInfo.IndexMinMSE); % IndexMinMSE or Index1SE
+%             b0 = FitInfo.Intercept(FitInfo.IndexMinMSE);
+%             zpredict = Y*b + b0;
+%             rr = corrcoef(zpredict, z);
+%             Corr(k,i) = rr(1,2);
+%             Coef{i}(k,:) = b';
 %             lassoPlot(B,FitInfo,'PlotType','CV');
 %             legend('show') % Show legend
       
@@ -271,9 +271,9 @@ i
 end
 
 % make difference maps
-% for i = [1:3, 5]
-%     Corr(:,i) = Corr(:,4) - Corr(:,i);
-% end
+for i = 1:4
+    Corr(:,i) = Corr(:,5) - Corr(:,i);
+end
 
 %% coefficient map
 
@@ -366,7 +366,7 @@ Title = {'Frequency',...
 %     'Category (adjusted colorbar)'};
 figurex([563         253        1565         553])
 % Max = max(Corr1(:));
-Max = 0.3;
+Max = 0.7;
 Min = prctile(Corr1(:),0);
 for i = 1:6
     subplot(2,3,i)

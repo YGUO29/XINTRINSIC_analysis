@@ -6,7 +6,7 @@ snames = natsortfiles({list.name})';
 
 % Load Sam's catagory labels directly
 load('D:\SynologyDrive\=data=\category_regressors_withLZvoc.mat')
-C = C_voc;
+% C = C_voc;
 tags = C.category_assignments; 
 nTags = max(tags);
 Color = C.colors;

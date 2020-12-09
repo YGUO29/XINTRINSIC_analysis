@@ -49,7 +49,7 @@ ct = getContour(M, para);
 
 %% step5: prosess the experimental session 
 % go to script_TrialBased or script_Cyclebased
-
+% get comp
 %% step6: plot experimental session with tonotopy contours
 figurex;
 imagesc(map_rgb_reg); axis image
@@ -59,7 +59,7 @@ plotContour(ct);
 %% another way to plot tonotopy & components together - use components as a transparency mask
 comp_mask = comp;
 for k = 1:K
-    comp_mask{k} = -comp{k};
+%     comp_mask{k} = -comp{k};
     comp_mask{k}(comp_mask{k} < 0) = 0;
     comp_mask{k} = comp_mask{k}./max(comp_mask{k}(:));
     comp_mask{k} = 1 - comp_mask{k}; % convert to transparency (0 = completely transparent)
@@ -73,7 +73,7 @@ ha = tight_subplot(p(1),p(2),[.01 .01],[.1 .01],[.01 .01]);
 for k = 1:K
     axes(ha(k));
     % imagesc(zeros(size(comp_mask{3})), 'AlphaData', comp_mask{3}), colormap('gray')
-    imagesc(map_rgb); 
+    imagesc(map_rgb_reg); 
     hold on
     h = imagesc(zeros(size(comp_mask{k})), [0 1]); colormap(gray)
     set(h, 'AlphaData', comp_mask{k});
