@@ -3,18 +3,18 @@ function [X, mov_rel] = ViewData(DataMat, para, opt)
 % DataMat = [rep, trial, height, width, frams]
 
 % demo usage:
-%     opt.ampLimit      = 0.003 .*[-1 1];
-%     opt.reps          = [1:11+3, 11+6:para.nRep];
-%     opt.trials        = 6; 
-%     opt.omit_trials   = [12 16 30 36 48 48 16 16];
-%     opt.omit_reps     = [1 1 1 1 1 5 7 10]; 
-%     opt.tWindow       = [para.preStim + 4, para.preStim + para.durStim]; % intrinsic natural sound: integrate until 4s after sound offset
-%     opt.p             = [8, 6]; % subplot rows and columes; 
-%     opt.mode          = 'allrep'; % allrep or avgrep
-%     opt.plotMode      = 'combined'; % combined or separate
-%     opt.saveON        = 1;
-%     opt.soundON       = 1;
-%     para.pathname     = 'D:\SynologyDrive\=data=\Marmoset_imaging\video_wf\';
+%     opt.ampLimit    = 0.003 .*[-1 1];
+%     opt.reps = [1:11+3, 11+6:para.nRep];
+%     opt.trials = 6; 
+%     opt.omit_trials = [12 16 30 36 48 48 16 16];
+%     opt.omit_reps = [1 1 1 1 1 5 7 10]; 
+%     opt.tWindow     = [para.preStim + 4, para.preStim + para.durStim]; % intrinsic natural sound: integrate until 4s after sound offset
+%     opt.p           = [8, 6]; % subplot rows and columes; 
+%     opt.mode        = 'allrep'; % allrep or avgrep
+%     opt.plotMode    = 'combined'; % combined or separate
+%     opt.saveON      = 1;
+%     opt.soundON     = 1;
+%     para.pathname = 'D:\SynologyDrive\=data=\Marmoset_imaging\video_wf\';
 %     figurex;
 %     [X, DataMat_norm] = ViewData(DataMat, para, opt); % X may contain NaNs if there are masked pixels
     
@@ -300,7 +300,6 @@ switch opt.plotMode
                 title(['Rep.Num.',num2str(opt.reps(iRep))])
             end
         end
-        
         pause
         for i = 1:para.nFrame
             for iRep = 1:nPanels
@@ -311,6 +310,7 @@ switch opt.plotMode
         
         case 'avgrep'
         [p,n] = numSubplots(nPanels);
+        figure,
         for iTrial = 1:nPanels
             temp = squeeze(mov_rel(iTrial,:,:,:));
             subplot(p(1),p(2),iTrial); 

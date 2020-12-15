@@ -149,8 +149,8 @@ I = reshape(mean(X, 1), para.height, para.width);
 k = 10; % k-means cluster of MTF
 ik = kmeans(X',k); % cluter numbers 1~k
 I = rescale(I,0,1);
-f1 = figurex;
-% f2 = figure;
+f1 = figure;
+f2 = f
 for i = 1:k
     ind = find(ik == i);
 
@@ -158,16 +158,6 @@ for i = 1:k
     Itemp = ones(para.height, para.width);
     Itemp(ind) = 0;
     II(:,:,1) = II(:,:,1) .* Itemp;
-    figure(f1),subplot(2,k,i),imagesc(II),axis image
+    figure(f1),subplot(1,k,i),imagesc(II),axis image
     
-    figure(f1), subplot(2,k,i+k)
-    MTF_temp = mean(MTF(:,:,ind), 3);
-    mm = prctile(MTF_temp(:),100);
-    h = imagesc(flipud(MTF_temp),[0 mm]); colormap(parula), colorbar, axis image
-    xticks( 2:2:18 )
-    xticklabels(arrayfun(@num2str,TM(2:2:18),'UniformOutput',false))
-    yticks(1:2:8)
-    yticklabels(arrayfun(@num2str,fliplr(SM(1:2:8)),'UniformOutput',false))
-    xlabel('Temporal Modulation Rate (Hz)')
-    ylabel('Spectral Modulation Rate (Cyc/Oct)')
 end
