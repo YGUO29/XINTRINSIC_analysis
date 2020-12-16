@@ -60,12 +60,13 @@ para.postStim = 0;
 clear Sys P
 size(DataMat)
 
-%% View data (averaged, within one period)
+%% View data 
 opt.ampLimit    = 0.05.*[-1, 1];
 opt.saveON      = 0; 
 opt.soundON     = 0;
-ViewData_raw(-DataMat, para, opt);
-        
+opt.mode        = 'allrep'; % avgrep (average repetitions) or allrep (concatenate repetitions)
+X = ViewData_raw(DataMat, para, opt);
+     
 %% cycle-based tonotopy analysis
 plotON = 1;
 

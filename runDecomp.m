@@ -24,7 +24,40 @@ end
 
 % figurex;
 % ha = tight_subplot(max(Ks), max(Ks), [.01 .01],[.1 .01],[.01 .01]);
-
+if strcmp(opt.method, 'PCA')
+    k = 1;
+    [U, S, V] = svd(X, 'econ');
+    R{k} = U(:, 1:Ks)';
+    W{k} = V(:, 1:Ks)';
+    recon_error = diag(S)./sum(diag(S));
+    if opt.plotON
+        % for plot components.
+        figurex; 
+        set(gcf,'color','w','position', [1323, 380, 1365, 192]);
+        ha = tight_subplot(opt.nRows, ceil(Ks./opt.nRows), [.01 .01],[.1 .01],[.01 .01]);
+        
+        
+        % plot components
+        for i = 1:Ks
+%             cutoff = 0.02;
+            cutoff = mean(W{k}(i,:)) + 7*std(W{k}(i,:)); % variable cutoff values for each components
+            comp_temp = zeros(para.height, para.width);
+            comp_temp(para.ind_save) = W{k}(i,:);
+            % ============= plot components only =============
+            %     mask_temp = double(~mask_outline_reg);
+            %     mask_temp(mask_temp == 0) = -inf;
+            axes(ha(i)); 
+%             axes(ha(i+(k-1)*max(Ks)));
+            imagesc(comp_temp,cutoff.*[-1 1]),axis image, colormap(jet)
+            comp{k}(:, :, i) = comp_temp;
+            drawnow;
+            colorbar;
+            axis off
+            %     plotContour(ct)
+        end
+    else
+    
+%% run a loop over nK    
 for k = 1:nK
     K = Ks(k); % k: the index; K: the #components   
     switch opt.method 
@@ -89,6 +122,7 @@ for k = 1:nK
             %     plotContour(ct)
         end
     end
+end
 end
 
 % plot reconstruction error

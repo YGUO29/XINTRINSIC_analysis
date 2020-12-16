@@ -1,27 +1,32 @@
-function ViewData_raw(DataMat, para, opt)
+function X = ViewData_raw(DataMat, para, opt)
 % for viewing a continous stimulus session, baseline set as the average
 % amplitude of the entire session
 
 % DataMat = [height, width, frams]
-mov         = squeeze(DataMat); 
-if length(size(mov)) == 4 % more than one reps
+mov = squeeze(DataMat); % eliminate trial and/or repetition dimensions
+if length(size(mov)) == 4 && strcmp(opt.mode, 'avgrep') % more than one reps, average across reps
     mov = squeeze(mean(mov,1));
+elseif length(size(mov)) == 4 && strcmp(opt.mode, 'allrep')
+    mov = permute(mov, [2 3 4 1]);
+    mov = reshape(mov, para.height, para.width, size(mov, 3)*size(mov, 4));
+    para.nFrame = size(mov,3); 
 else % only one rep
 end
     
 baseline    = repmat(mean(mov,3), 1, 1, para.nFrame);
-Delta       = mov - baseline;
-tic, mov_rel = Delta./repmat(mean(mov,3), 1, 1, para.nFrame); toc
+deltaF      = mov - baseline;
+% tic, 
+mov_rel     = deltaF./baseline;
+X           = reshape(mov_rel, para.height*para.width, size(mov_rel,3));
+X = X';
+% toc
 
 % for i = 1:para.nFrame
 %     imagesc(mov_rel(:,:,i)); colormap('gray'); colorbar; axis image
 %     pause
 % end
-    
 % Delta   = bsxfun(@minus, mov, mean(mov,3));
 % mov_rel = bsxfun(@rdivide, Delta, mean(mov,3));
-
-
 
 %% save video, start a video writer object
 if opt.saveON
@@ -50,16 +55,19 @@ if opt.saveON
 end
 
    
-    figure,
+    figurex,
     % display the averaged reponse first
-    h = imagesc(mean(mov_rel,3),opt.ampLimit); colormap('jet'); colorbar; axis image
+    h = imagesc(mean(mov_rel,3),opt.ampLimit); 
+%     colormap('jet'); colorbar; 
+    CT = cbrewer('div', 'RdBu', 255);
+    colormap(CT); colorbar
+    axis image
     pause
     for i = 1:para.nFrame
         mov_temp = mov_rel(:,:,i);
         set(h,'CData',mov_temp)
         title(['time = ',num2str(i*0.2,'%-5.1f')])
-        pause(1/para.fr)
-    %         pause
+        pause(1/para.fr/5)
         if opt.saveON    
             % save video and audio
             MAX =           opt.ampLimit(2);

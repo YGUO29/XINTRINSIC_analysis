@@ -40,7 +40,7 @@ if ~iscell(file_mat) % only load one file
             DataMat(para.nRep+1 : para.nRep+size(P.ProcDataMat,1),:,:,:,:) = squeeze(P.ProcDataMat);
             para.nRep = para.nRep + size(P.ProcDataMat, 1);
         end
-        clear S P
+%         clear S P
 else % load multiple files
     for i = 1:length(file_mat)
         load(fullfile(path_mat,file_mat{i}));
@@ -68,7 +68,7 @@ else % load multiple files
         DataMat(para.nRep+1 : para.nRep+size(P.ProcDataMat,1),:,:,:,:) = squeeze(P.ProcDataMat);
     end
     
-    clear S P
+%     clear S P
     para.nRep = size(DataMat,1);
     disp([num2str(para.nRep),' finished'])
     end     
@@ -114,9 +114,9 @@ figure, imagesc(reshape(temp, para.height, para.width), [-Max, Max]),
 axis image, colormap(jet)
 %% save MATLAB files
 animal = '102D'; 
-session = 'Ripple';
+session = 'Spont';
 modal = 'Calcium';
-date = '201211';
+date = '201203';
 datapath = 'D:\SynologyDrive\=data=\XINTRINSIC';
 % save([datapath, '\', animal, '\DataMatReg_', animal, '_', session, '_', num2str(para.nRep), 'reps.mat'],...
 %     'DataMat_reg', 'para', '-v7.3')
@@ -132,10 +132,10 @@ save(['python_', file_mat], 'data')
 
 %% run decomposition in MATLAB
 opt.fluo = 1; 
-opt.method = 'mICA'; % 'mICA' or 'NMF'
+opt.method = 'PCA'; % 'mICA' or 'NMF' or 'PCA'
 opt.nRows = 1;
 opt.plotON = 1;
-Ks = 5;
+Ks = 8;
 
 % opt.X_test = X_test;
 [Rs, Ws, comp, recon_error, X_hats] = runDecomp(X, Ks, opt, para);
