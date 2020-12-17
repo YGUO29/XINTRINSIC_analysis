@@ -52,6 +52,9 @@ end
 if ~isfield(opt, 'soundON')
     opt.soundON     = 0; % save the sound for this recording as well
 end
+if ~isfield(opt, 'color')
+    opt.color     = 'jet'; % save the sound for this recording as well
+end
 %% throw out moving trials
 % lengths of these two fields need to be matched
 if isfield(opt, 'omit_trials') || isfield(opt, 'omit_reps')
@@ -180,10 +183,17 @@ switch opt.plotMode
         img_all = [img_all;reshape(img_rel(:,:,p(2)*(k-1)+1:p(2)*k),para.height,para.width*p(2))];
     end
 
+    % FIRST FRAME
     % display the averaged reponse first
-    h = imagesc(img_all,opt.ampLimit); colormap('jet'); axis image
-    axis off
-    colorbar;
+    h = imagesc(img_all,opt.ampLimit); axis image; axis off; colorbar;
+    switch opt.color
+        case 'jet'
+        colormap('jet');
+        case 'RdBu'
+        colormap( flipud(cbrewer('div', 'RdBu', 256)) );
+        otherwise
+    end
+    
     pause
 %     for i = 0.8*para.fr:4*para.fr % for cropped videos
     for i = 1:size(mov_rel,4)
@@ -200,7 +210,7 @@ switch opt.plotMode
 
         set(h,'CData',mov_all)
         title(['time = ',num2str(i*(1./para.fr),'%-5.1f')])
-%         pause(1/para.fr)
+        pause(1/para.fr)
 
         if opt.saveON   
             
@@ -247,23 +257,26 @@ switch opt.plotMode
     % set the last frame as mean response
     set(h,'CData',img_all)
     if opt.saveON % write the last frame and release object videoFWriter
-%         img_all = repelem(img_all, 2, 2);% ......... for better video effect
-%         frame_rgb = uint8(zeros(size(img_all,1), size(img_all,2), 3));
-%         Max = opt.ampLimit(2); 
-%         rgb_ind = floor(img_all.*(255/2/Max)+257/2);
-%         rgb_ind(rgb_ind>256) = 256;
-%         frame_rgb = c(rgb_ind,:);
-%         frame = reshape(frame_rgb, size(img_all,1), size(img_all,2), 3);
+        % save video (in jet color) and audio
+        img_all = repelem(img_all, 2, 2);% ......... for better video effect
+        frame_rgb = uint8(zeros(size(img_all,1), size(img_all,2), 3));
+        Max = opt.ampLimit(2); 
+        rgb_ind = floor(img_all.*(255/2/Max)+257/2);
+        rgb_ind(rgb_ind > 256) = 256;
+        rgb_ind(rgb_ind < 1) = 1;
+        frame_rgb = c(rgb_ind,:);
+        frame = reshape(frame_rgb, size(img_all,1), size(img_all,2), 3);
         
-        MAX =           opt.ampLimit(2);
-        MIN =           min(min(img_all));
-        img_all =       (2^8-1).*(img_all - MIN)./(MAX - MIN);
-        img_all =       uint8(img_all);
-        img_all =       repelem(img_all, 2, 2);% ......... for better video effect
-%         frame =         ind2rgb(img_all,jet(256));
-        frame =         repmat(img_all,1,1,3);
-        frame(:,:,1) =  img_all*0;
-        frame(:,:,3) =  img_all*0;
+          % save video (in green/black color) and audio
+%         MAX =           opt.ampLimit(2);
+%         MIN =           min(min(img_all));
+%         img_all =       (2^8-1).*(img_all - MIN)./(MAX - MIN);
+%         img_all =       uint8(img_all);
+%         img_all =       repelem(img_all, 2, 2);% ......... for better video effect
+% %         frame =         ind2rgb(img_all,jet(256));
+%         frame =         repmat(img_all,1,1,3);
+%         frame(:,:,1) =  img_all*0;
+%         frame(:,:,3) =  img_all*0;
 
         if opt.soundON
             if i*SoundBatchSampleNum > length(SoundSeq) % if end of current frame is longer than sound (by <1 segment)
@@ -295,8 +308,16 @@ switch opt.plotMode
         for iRep = 1:nPanels
             temp = squeeze(mov_rel(iRep,:,:,:));
             subplot(p(1),p(2),iRep); 
-            h(iRep) = imagesc(temp(:,:,1),opt.ampLimit); colorbar; colormap('jet'); 
-            axis image
+            h(iRep) = imagesc(temp(:,:,1),opt.ampLimit); axis image; colorbar; 
+            
+            switch opt.color
+                case 'jet'
+                colormap('jet');
+                case 'RdBu'
+                colormap( flipud(cbrewer('div', 'RdBu', 256)) );
+                otherwise
+            end
+            
             if iRep == nPanels
                 title('Averaged across reps')
             else

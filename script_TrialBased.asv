@@ -85,7 +85,7 @@ opt = struct;
 % [X, DataMat_norm, ~] = getX(DataMat, para, opt);
 
 % ==== get data matrix X and view/save the video ====
-    opt.ampLimit    = 0.10.*[-1 1];
+    opt.ampLimit    = 0.15.*[-1 1];
 %     opt.reps          = [1:11+3, 11+6:para.nRep];
 %     opt.trials        = 6; 
 %     opt.omit_trials   = [12 16 30 36 48 48 16 16];
@@ -96,7 +96,6 @@ opt = struct;
 %     opt.plotMode      = 'separate';
 %     opt.saveON        = 1;
 %     opt.soundON       = 1;
-    opt.color         = 'RdBu'; % jet or RdBu
     para.pathname     = 'D:\SynologyDrive\=data=\Marmoset_imaging\video_wf\';
     
     figurex;
@@ -107,7 +106,7 @@ opt = struct;
 para.ind_save       = setdiff(1:para.width*para.height, ind_delete);
 X(:, ind_delete)    = [];
 %% compare two sets of trials
-X1 = X(1:size(X,1)/2, :); X2 = X(size(X,1)/2+1:end, :);
+X1 = X(1:length(X)/2); X2 = X(1:length(X)/2)
 % X2 = X(2:2:360,:);
 % X1 = X(1:2:359,:);
 temp = mean(X1 - X2, 1); % X1: Original, X2: modified
