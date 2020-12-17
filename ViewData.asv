@@ -195,7 +195,7 @@ switch opt.plotMode
         end
         mov_all = [];
         for k = 1:p(1)
-            mov_all = [mov_all; reshape( mov_temp(:,:,p(2)*(k-1)+1:p(2)*k), para.height, para.width*p(2))];
+            mov_all = [mov_all;reshape(mov_temp(:,:,p(2)*(k-1)+1:p(2)*k),para.height,para.width*p(2))];
         end
 
         set(h,'CData',mov_all)
@@ -213,10 +213,7 @@ switch opt.plotMode
 %             Max = max(abs(mov_all(:)));
             Max = opt.ampLimit(2); 
             rgb_ind = floor(mov_all.*(255/2/Max)+257/2);
-            % saturate pixels have higher values than Max, or lower values
-            % than -Max
-            rgb_ind(rgb_ind > 256) = 256;
-            rgb_ind(rgb_ind < 1) = 1;
+            rgb_ind(rgb_ind>256) = 256;
             frame_rgb = c(rgb_ind,:);
             frame = reshape(frame_rgb, size(mov_all,1), size(mov_all,2), 3);
             
