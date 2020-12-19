@@ -87,18 +87,18 @@ opt = struct;
 % ==== get data matrix X and view/save the video ====
     opt.ampLimit    = 0.10.*[-1 1];
 %     opt.reps          = [1:11+3, 11+6:para.nRep];
-    opt.trials        = 1; 
+%     opt.trials        = 1; 
 %     opt.omit_trials   = [12 16 30 36 48 48 16 16];
 %     opt.omit_reps     = [1 1 1 1 1 5 7 10];
 %     opt.tWindow       = [para.preStim + 4, para.preStim + para.durStim]; % intrinsic natural sound: integrate until 4s after sound offset
-%     opt.p             = [8, 6]; % subplot rows and columes; 
+    opt.p             = [8, 19]; % subplot rows and columes; 
 %     opt.mode          = 'allrep';
 %     opt.plotMode      = 'separate';
-    opt.saveON        = 1;
+%     opt.saveON        = 1;
 %     opt.soundON       = 1;
-    opt.color         = {'div', 'PRGn'}; % jet or {'div', 'PRGn'}
+    opt.color         = 'jet'; % jet or {'div', 'PRGn'}
     para.pathname     = 'D:\SynologyDrive\=data=\Marmoset_imaging\video_wf\';
-    para.sessionname  = '102DNatVoc';
+    para.sessionname  = '102D_music_TBW';
     figurex;
     [X, DataMat_norm] = ViewData(DataMat, para, opt); 
     
@@ -116,9 +116,9 @@ figure, imagesc(reshape(temp, para.height, para.width), [-Max, Max]),
 axis image, colormap(jet)
 %% save MATLAB files
 animal = '102D'; 
-session = 'Spont';
+session = 'Ripple';
 modal = 'Calcium';
-date = '201203';
+date = '201216';
 datapath = 'D:\SynologyDrive\=data=\XINTRINSIC';
 % save([datapath, '\', animal, '\DataMatReg_', animal, '_', session, '_', num2str(para.nRep), 'reps.mat'],...
 %     'DataMat_reg', 'para', '-v7.3')

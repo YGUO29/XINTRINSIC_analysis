@@ -53,14 +53,17 @@ if ~isfield(opt, 'soundON')
     opt.soundON     = 0; % save the sound for this recording as well
 end
 
-if ~isfield(opt, 'color')
+if ~isfield(opt, 'color') % default - save and display in jet
     opt.color     = 'jet'; % save the sound for this recording as well
     cmap          = jet(256);
 else
     if ischar(opt.color)
-        cmap = eval([opt.color, '(256)']);
-    else
-        if strcmp(opt.color{2}, 'RdBu'); cmap = flipud(cbrewer(opt.color{1}, opt.color{2}, 256));
+        switch opt.color 
+            case 'green'; cmap = jet(256); % save in green mode, display in jet
+            otherwise; cmap = eval([opt.color, '(256)']); % save and display in specified cmap 
+        end
+    else % save and display in cbrewer maps
+        if strcmp(opt.color{2}, 'RdBu'); cmap = flipud(cbrewer(opt.color{1}, opt.color{2}, 256)); % flip red and blue for RdBu map (red = positive)
         else cmap = cbrewer(opt.color{1}, opt.color{2}, 256); end
     end
 end
@@ -220,30 +223,27 @@ switch opt.plotMode
         pause(1/para.fr)
 
         if opt.saveON   
-            
+            if strcmp(opt.color, 'green')
+            % save video (in green/black color) and audio
+            MAX =           opt.ampLimit(2);
+            MIN =           0; % does not show values below zero
+            mov_all =       (2^8-1).* (mov_all - MIN)./(MAX - MIN);
+            mov_all =       uint8(mov_all);
+            mov_all =       repelem(mov_all, 2, 2);% ......... for better video effect
+            frame =         repmat(mov_all,1,1,3); 
+            frame(:,:,1) =  mov_all*0; % use green color
+            frame(:,:,3) =  mov_all*0;
+            else 
             % save video (in jet color) and audio
             mov_all = repelem(mov_all, 2, 2);% ......... for better video effect
-%             cmap = uint8(cmap.*(2^8-1));
-%             frame_rgb = uint8(zeros(size(mov_all,1), size(mov_all,2), 3)); 
             Max = opt.ampLimit(2); 
             rgb_ind = floor(mov_all.*(255/2/Max)+257/2);
-            % saturate pixels have higher values than Max, or lower values
-            % than -Max
             rgb_ind(rgb_ind > 256) = 256;
             rgb_ind(rgb_ind < 1) = 1;
             frame_rgb = cmap(rgb_ind,:);
             frame = reshape(frame_rgb, size(mov_all,1), size(mov_all,2), 3);
+            end
             
-            % save video (in green/black color) and audio
-%             MAX =           opt.ampLimit(2);
-%             MIN =           min(min(mov_all));
-%             mov_all =       (2^8-1).* (mov_all - MIN)./(MAX - MIN);
-%             mov_all =       uint8(mov_all);
-%             mov_all =       repelem(mov_all, 2, 2);% ......... for better video effect
-%             frame =         repmat(mov_all,1,1,3); 
-%             frame(:,:,1) =  mov_all*0; % use green color
-%             frame(:,:,3) =  mov_all*0;
-
             if opt.soundON
                 if i*SoundBatchSampleNum > length(SoundSeq) % if end of current frame is longer than sound (by <1 segment)
                     videoFWriter(frame,SoundSeq((i-1)*SoundBatchSampleNum+1:end) );
@@ -261,6 +261,19 @@ switch opt.plotMode
     % set the last frame as mean response
     set(h,'CData',img_all)
     if opt.saveON % write the last frame and release object videoFWriter
+        if strcmp(opt.color, 'green')
+        % save video (in green/black color) and audio
+        MAX =           opt.ampLimit(2);
+        MIN =           0; % does not show values below zero
+        img_all =       (2^8-1).*(img_all - MIN)./(MAX - MIN);
+        img_all =       uint8(img_all);
+        img_all =       repelem(img_all, 2, 2);% ......... for better video effect
+%         frame =         ind2rgb(img_all,jet(256));
+        frame =         repmat(img_all,1,1,3);
+        frame(:,:,1) =  img_all*0;
+        frame(:,:,3) =  img_all*0;
+          
+        else
         % save video (in jet color) and audio
         img_all = repelem(img_all, 2, 2);% ......... for better video effect
         frame_rgb = uint8(zeros(size(img_all,1), size(img_all,2), 3));
@@ -270,18 +283,8 @@ switch opt.plotMode
         rgb_ind(rgb_ind < 1) = 1;
         frame_rgb = cmap(rgb_ind,:);
         frame = reshape(frame_rgb, size(img_all,1), size(img_all,2), 3);
+        end
         
-          % save video (in green/black color) and audio
-%         MAX =           opt.ampLimit(2);
-%         MIN =           min(min(img_all));
-%         img_all =       (2^8-1).*(img_all - MIN)./(MAX - MIN);
-%         img_all =       uint8(img_all);
-%         img_all =       repelem(img_all, 2, 2);% ......... for better video effect
-% %         frame =         ind2rgb(img_all,jet(256));
-%         frame =         repmat(img_all,1,1,3);
-%         frame(:,:,1) =  img_all*0;
-%         frame(:,:,3) =  img_all*0;
-
         if opt.soundON
             if i*SoundBatchSampleNum > length(SoundSeq) % if end of current frame is longer than sound (by <1 segment)
                 videoFWriter(frame,SoundSeq((i-1)*SoundBatchSampleNum+1:end) );
