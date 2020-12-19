@@ -87,18 +87,18 @@ opt = struct;
 % ==== get data matrix X and view/save the video ====
     opt.ampLimit    = 0.10.*[-1 1];
 %     opt.reps          = [1:11+3, 11+6:para.nRep];
-%     opt.trials        = 6; 
+    opt.trials        = 1; 
 %     opt.omit_trials   = [12 16 30 36 48 48 16 16];
 %     opt.omit_reps     = [1 1 1 1 1 5 7 10];
 %     opt.tWindow       = [para.preStim + 4, para.preStim + para.durStim]; % intrinsic natural sound: integrate until 4s after sound offset
 %     opt.p             = [8, 6]; % subplot rows and columes; 
 %     opt.mode          = 'allrep';
 %     opt.plotMode      = 'separate';
-%     opt.saveON        = 1;
+    opt.saveON        = 1;
 %     opt.soundON       = 1;
-    opt.color         = 'RdBu'; % jet or RdBu
+    opt.color         = {'div', 'PRGn'}; % jet or {'div', 'PRGn'}
     para.pathname     = 'D:\SynologyDrive\=data=\Marmoset_imaging\video_wf\';
-    
+    para.sessionname  = '102DNatVoc';
     figurex;
     [X, DataMat_norm] = ViewData(DataMat, para, opt); 
     
