@@ -10,8 +10,8 @@ nPix = size(X,2);
 MTF     = zeros(nSM,nTM,nPix);
 
 
-TM      = S.tm; nTM = length(TM);
-SM      = S.sm; nSM = length(SM);
+TM      = S.tm; nTM = length(TM); % TM change first
+SM      = S.sm; nSM = length(SM); % SM change slower
 IndMat  = cell(nSM, nTM); 
 for i = 1:nSM
     for j = 1:nTM
@@ -26,7 +26,7 @@ for kk = 1:nPix
     data_temp   = X(:,kk); % select a pixel. rows of X: number of SM/TM parameters
     data_temp   = reshape(data_temp, nTM, nSM)'; % each column --> same SM --> transpose
     MTF(:,:,kk)  = data_temp;
-    MTF(:,:,kk)  = MTF(:,order,kk);
+    MTF(:,:,kk)  = MTF(:,order,kk); % reorder columns (TMs)
 
 end
 MTF_mean = mean(MTF,3);
@@ -48,7 +48,7 @@ end
 %% get best TM and SM map
 bTM = zeros(1, nPix);
 bSM = bTM;
-for i = 100:nPix
+for i = 1:nPix
     MTF_temp = MTF(:,:,i);
     
     [row, col] = find(MTF_temp == max(MTF_temp(:)));
@@ -68,6 +68,8 @@ bTM = reshape(bTM, para.height, para.width);
 
 figurex;
 imagesc(bSM), axis image, colorbar
+ax = gca;
+ax.ButtonDownFcn = @mouseClick
 % CT = cbrewer('qual', 'Paired', 8); colormap(CT)
 colormap(parula(8)), 
 title('Best spectral modulation')

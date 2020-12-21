@@ -22,16 +22,14 @@ function [X, mov_rel] = ViewData(DataMat, para, opt)
 if ~isfield(opt, 'reps')
     opt.reps = 1:para.nRep; % default: all repetitions
 end
-% ==== window of different length (modification ongoing...)=====
-% if ~isfield(opt, 'tWindow') % not specified, make it equal to stimulus duration
-%     opt.tWindow = [para.preStim, para.preStim + para.durStim]; 
-%     opt.tWindow = repmat(opt.tWindow, para.nStim, 1);
-% elseif isfield(opt, 'tWindow') && length(opt.tWindow) == 2 % specified, same durations
-%     opt.tWindow = repmat(opt.tWindow, para.nStim, 1);
-% end
-% ==== window of the same length ====
+
+% ==== window for averaging response ====
 if ~isfield(opt, 'tWindow') % not specified, make it equal to stimulus duration
-    opt.tWindow = [para.preStim, para.preStim + para.durStim]; 
+    opt.tWindow = [para.preStim, para.preStim + para.durStim];
+    opt.tWindow = repmat(opt.tWindow, para.nStim, 1);
+elseif isfield(opt, 'tWindow') && length(opt.tWindow) == 2 % specified, same durations
+    opt.tWindow = repmat(opt.tWindow, para.nStim, 1);    
+else % specified, different durations
 end
 
 if ~isfield(opt, 'trials')
@@ -96,7 +94,7 @@ if strcmp(opt.mode,'avgrep')
         img_base = repmat(img_base,1,1,para.nFrame);
         mov_rel(i,:,:,:) = (mov_mean - img_base)./img_base;
         % calculate deltaF/F (averaged image, time window determined by opt.tWindow)
-        img_rel(i,:,:) = squeeze(mean(mov_rel(i,:,:,floor(para.fr*opt.tWindow(1))+1 : floor(para.fr*opt.tWindow(2))),4, 'omitnan'));  
+        img_rel(i,:,:) = squeeze(mean(mov_rel(i,:,:,floor(para.fr*opt.tWindow(iTrial, 1))+1 : floor(para.fr*opt.tWindow(iTrial, 2))),4, 'omitnan'));  
     end
     % data matrix X [#Stim, #Pixel]
     X = reshape(img_rel, nPanels, para.width*para.height);
@@ -126,7 +124,7 @@ elseif strcmp(opt.mode, 'allrep')
         img_base = squeeze(mean(mov_temp(:,:,1:floor(para.fr*para.preStim)),3, 'omitnan')); % pre-stimulus: baseline
         img_base = repmat(img_base,1,1,para.nFrame);
         mov_rel(i,:,:,:) = (mov_temp - img_base)./img_base;
-        img_rel(i,:,:) = mean(mov_rel(i,:,:,floor(para.fr*opt.tWindow(1))+1 : floor(para.fr*opt.tWindow(2))),4, 'omitnan');
+        img_rel(i,:,:) = mean(mov_rel(i,:,:,floor(para.fr*opt.tWindow(iTrial, 1))+1 : floor(para.fr*opt.tWindow(iTrial, 2))),4, 'omitnan');
     end
     
     % ==== calculate mean movie, put it after all reps ==== 
@@ -134,7 +132,7 @@ elseif strcmp(opt.mode, 'allrep')
     img_base = squeeze(mean(mov_mean(:,:,1:floor(para.fr*para.preStim)),3, 'omitnan'));
     img_base = repmat(img_base,1,1,para.nFrame);
     mov_rel(i+1,:,:,:) = (mov_mean - img_base)./img_base;
-    img_rel(i+1,:,:) = mean(mov_rel(i+1,:,:,floor(para.fr*opt.tWindow(1))+1 : floor(para.fr*opt.tWindow(2))),4, 'omitnan');
+    img_rel(i+1,:,:) = mean(mov_rel(i+1,:,:,floor(para.fr*opt.tWindow(iTrial, 1))+1 : floor(para.fr*opt.tWindow(iTrial, 2))),4, 'omitnan');
     X = reshape(img_rel, nPanels, para.width*para.height);
     
     fnametemp = para.filename;

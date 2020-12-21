@@ -5,8 +5,8 @@
 % load('D:\SynologyDrive\=data=\F_halfcosine_marm_4reps.mat') 
 load('D:\SynologyDrive\=data=\F_halfcosine_marm_NatVoc.mat') 
 
-K = 6;
-R = Rs{1};
+K = 20;
+R = Rs{20};
 
 %%
 nFeat       = size(F.F_mat,1);

@@ -85,19 +85,22 @@ opt = struct;
 % [X, DataMat_norm, ~] = getX(DataMat, para, opt);
 
 % ==== get data matrix X and view/save the video ====
-    opt.ampLimit    = 0.15.*[-1 1];
+    opt.ampLimit    = 0.10.*[-1 1];
 %     opt.reps          = [1:11+3, 11+6:para.nRep];
-%     opt.trials        = 6; 
+%     opt.trials        = 6+[0, 36]; 
 %     opt.omit_trials   = [12 16 30 36 48 48 16 16];
 %     opt.omit_reps     = [1 1 1 1 1 5 7 10];
-%     opt.tWindow       = [para.preStim + 4, para.preStim + para.durStim]; % intrinsic natural sound: integrate until 4s after sound offset
-%     opt.p             = [8, 6]; % subplot rows and columes; 
+
+%     opt.tWindow       = [para.preStim, para.preStim + para.durStim]; % intrinsic natural sound: integrate until 4s after sound offset
+    opt.tWindow     = [para.preStim.*ones(para.nStim,1), para.preStim.*ones(para.nStim,1) + dur_mat'];
+%     opt.p             = [24, para.nStim/24]; % subplot rows and columes; 
 %     opt.mode          = 'allrep';
 %     opt.plotMode      = 'separate';
 %     opt.saveON        = 1;
 %     opt.soundON       = 1;
+    opt.color         = {'div', 'PRGn'}; % jet or {'div', 'PRGn'}
     para.pathname     = 'D:\SynologyDrive\=data=\Marmoset_imaging\video_wf\';
-    
+    para.sessionname  = '102D_music_TBW';
     figurex;
     [X, DataMat_norm] = ViewData(DataMat, para, opt); 
     
@@ -106,18 +109,23 @@ opt = struct;
 para.ind_save       = setdiff(1:para.width*para.height, ind_delete);
 X(:, ind_delete)    = [];
 %% compare two sets of trials
-X1 = X(1:length(X)/2); X2 = X(1:length(X)/2)
-% X2 = X(2:2:360,:);
-% X1 = X(1:2:359,:);
-temp = mean(X1 - X2, 1); % X1: Original, X2: modified
-Max = max(abs(temp))/2;
+% X1 = X(1:size(X,1)/2, :); X2 = X(size(X,1)/2+1:end, :);
+X1 = X(1:36,:);
+X2 = X(37:72,:); 
+X3 = X(72+1:108,:);
+X3 = X(108+1:end,:);
+%%
+temp = mean(X3 - (X1+X3)/2, 1); % X1: Original, X2: modified
+Max = max(abs(temp));
 figure, imagesc(reshape(temp, para.height, para.width), [-Max, Max]), 
-axis image, colormap(jet)
+axis image,
+colormap(jet)
+% colormap(cbrewer('div', 'RdBu', 256))
 %% save MATLAB files
 animal = '102D'; 
-session = 'Spont';
+session = 'Ripple';
 modal = 'Calcium';
-date = '201203';
+date = '201216';
 datapath = 'D:\SynologyDrive\=data=\XINTRINSIC';
 % save([datapath, '\', animal, '\DataMatReg_', animal, '_', session, '_', num2str(para.nRep), 'reps.mat'],...
 %     'DataMat_reg', 'para', '-v7.3')
