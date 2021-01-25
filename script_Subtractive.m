@@ -1,4 +1,5 @@
 % =============== load files to analyze ================
+% for analyzing colony recording and control sessions
 clear all
 para.nRep = 0;  
 %% read multiple files

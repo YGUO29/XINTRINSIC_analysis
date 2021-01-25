@@ -45,7 +45,7 @@ cmap = colormap(lines(7));
 
 %% Variance explained - bar plot
 % acoustics regression with components' response profiles
-K = 10;
+K = 6;
 R = Rs{1};
 
 nStim = size(X,1);
@@ -251,8 +251,8 @@ for i = 1:6
 
             % ==== lasso regression ====
             [B, FitInfo] = lasso(Y, z,'CV', 3);
-            b = B(:, FitInfo.Index1SE); % IndexMinMSE or Index1SE
-            b0 = FitInfo.Intercept(FitInfo.Index1SE);
+            b = B(:, FitInfo.IndexMinMSE); % IndexMinMSE or Index1SE
+            b0 = FitInfo.Intercept(FitInfo.IndexMinMSE);
             zpredict = Y*b + b0;
             rr = corrcoef(zpredict, z);
             Corr(k,i) = rr(1,2);
@@ -318,10 +318,10 @@ for i = [1:3, 6]
 %     b = b./repmat(sum(b,2), 1, size(b,2)); 
 %     temp = b*[1:length(feat)]'; 
     % ==== max as a visualization measurement ====
-    [~,temp] = max(b,[],2); 
+    [~,b_ind] = max(b,[],2); 
 
-    temp = reshape(temp,[para.height, para.width]);
-    map = repmat(temp, 1, 1, 3);
+    b_ind = reshape(b_ind,[para.height, para.width]);
+    map = repmat(b_ind, 1, 1, 3);
     map(:,:,1) = (map(:,:,1)./length(feat)).*0.8; % H
 %     map(:,:,1) = (map(:,:,1)./max(max(map(:,:,1)))).*0.8; % H
     map(:,:,2) = reshape(corr,[para.height, para.width]); % S
@@ -337,7 +337,11 @@ for i = [1:3, 6]
     end
     imagesc(map), axis image, 
     
-    cmap = hsv(length(feat));
+    cmap_hsv = ones(length(feat), 3);
+    cmap_hsv(:,1) = ((1:length(feat))./length(feat)).*0.8';
+    cmap = hsv2rgb(cmap_hsv);
+%     cmap = hsv(length(feat));
+    
     colormap(gca, cmap);
     hcb(i) = colorbar;
     cb_ticks = range(hcb(i).Limits)/length(feat):range(hcb(i).Limits)/length(feat):hcb(i).Limits(2);
@@ -365,15 +369,15 @@ Title = {'Frequency',...
 %     'Category',...
 %     'Category (adjusted colorbar)'};
 figurex([563         253        1565         553])
-% Max = max(Corr1(:));
-Max = 0.3;
+Max = max(Corr1(:));
+% Max = 0.3;
 Min = prctile(Corr1(:),0);
 for i = 1:6
     subplot(2,3,i)
-    temp = reshape(Corr1(:,i),[para.height, para.width]);
+    b_ind = reshape(Corr1(:,i),[para.height, para.width]);
 %     Min = prctile(temp(:),75);
     Min = 0;
-    imagesc(temp, [Min, Max]), axis image, colorbar
+    imagesc(b_ind, [Min, Max]), axis image, colorbar
     title(Title{i})
     axis off
     colormap(jet)
@@ -387,15 +391,15 @@ Min = prctile(Corr2(:),0);
 for i = 1:2
     subplot(1,2,i)
     if i== 2
-        temp = reshape(Corr(:,6),[para.height, para.width]);
-        Max = max(temp(:));
+        b_ind = reshape(Corr(:,6),[para.height, para.width]);
+        Max = max(b_ind(:));
 %         Min = prctile(Corr(:),0);
         Min = 0;
     else
-        temp = reshape(Corr(:,6),[para.height, para.width]);
+        b_ind = reshape(Corr(:,6),[para.height, para.width]);
     end
 %     Max = max(temp(:));
-    imagesc(temp, [Min, Max]), axis image, colorbar
+    imagesc(b_ind, [Min, Max]), axis image, colorbar
     title(Title{i+5})
     axis off
     colormap(jet)
@@ -407,10 +411,10 @@ end
 figurex([669,738,1263,420]); 
 img_rgb = zeros(para.height, para.width, 3);
 for i = 1:3
-    temp = reshape(Corr(:,i),[para.height, para.width]);
-    temp = temp-min(temp(:));
+    b_ind = reshape(Corr(:,i),[para.height, para.width]);
+    b_ind = b_ind-min(b_ind(:));
 %     temp = temp./max(temp(:));
-    img_rgb(:,:,i) = temp;
+    img_rgb(:,:,i) = b_ind;
 end
 img_rgb = img_rgb./max(img_rgb(:));
 subplot(1,2,1)
@@ -419,12 +423,12 @@ title('R=freq, G=temp.mod., B=spec.mod.')
 
 % overlay MAX of regression map for frequency, temp mod, spec mod in RGB channel
 img_rgb = zeros(para.height, para.width, 3);
-temp = reshape(Corr(:,1:3),[para.height, para.width, 3]);
-[~, ind_max] = max(temp,[],3);
+b_ind = reshape(Corr(:,1:3),[para.height, para.width, 3]);
+[~, ind_max] = max(b_ind,[],3);
 for i = 1:para.height
     for j = 1:para.width
 %         img_rgb(i,j,ind_max(i,j)) = 1;
-        img_rgb(i,j,ind_max(i,j)) = temp(i,j, ind_max(i,j));
+        img_rgb(i,j,ind_max(i,j)) = b_ind(i,j, ind_max(i,j));
     end
 end
 img_rgb = (img_rgb - min(img_rgb(:)))./range(img_rgb(:));

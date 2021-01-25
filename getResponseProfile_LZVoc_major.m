@@ -1,16 +1,16 @@
-function [I_inorder, R_inorder, tags_inorder, snames_inorder] = getResponseProfile_NatVoc(R,plot_on)
+function [I_inorder, R_inorder, tags_inorder, snames_inorder] = getResponseProfile_LZVoc_major(R,plot_on)
 % filelist = dir('\\10.16.58.229\Test_Procedures\==Slides & Documents\Music\naturalsounds165\naturalsounds165')
-folder_origin = 'D:\SynologyDrive\=sounds=\Natural sound\Natural_JM_XINTRINSIC_withLZVoc_200909\Norm';
+folder_origin = 'D:\SynologyDrive\=sounds=\Vocalization\temp_for capsule\AllMajor_Orig_norm';
 list = dir(fullfile(folder_origin,'*.wav'));
 snames = natsortfiles({list.name})';
 
 % Load Sam's catagory labels directly
-load('D:\SynologyDrive\=data=\category_regressors_withLZvoc.mat')
+load('D:\SynologyDrive\=data=\category_regressors_LZVoc_major.mat')
 % C = C_voc;
 tags = C.category_assignments; 
 nTags = max(tags);
-Color = C.colors;
-
+% Color = C.colors;
+Color = jet(length(C.category_labels)).*0.8;
 
 % [tags,snames] = xlsread([folder_origin,'\NatSound_label'],1);
 % set colors (color samples from Sam's 2015 papper by Yueqi)
@@ -49,7 +49,8 @@ for i = 1:length(ind)
             b = bar(resp,'FaceColor','flat');
             title(['Component ',num2str(i)],'fontsize',16)
             b.CData = Color_inorder;
-            ylim([-0.5 2.5]), xlim([1 size(R,1)])
+            b.EdgeColor = 'none';
+            ylim([min(resp) max(resp)]), xlim([1 size(R,1)])
             xticks([1 size(R,1)])
             set(gca,'fontsize',24)
             axis square
@@ -57,7 +58,16 @@ for i = 1:length(ind)
         end
     else break
     end
+    
+    for i = 1:4
+        text(100, max(resp)*2/3 - 0.2*(i-1), ...
+        C.category_labels(i), 'Color', Color(i,:),...
+        'FontSize',14)
+    end
+
 end
+
+
 
 % if plot_on; figure; end
 % for i = 4:6

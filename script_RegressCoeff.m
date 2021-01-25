@@ -4,11 +4,13 @@
 % load('D:\=code=\Sound_analysis\F_test.mat') 
 % load('D:\SynologyDrive\=data=\F_halfcosine_marm_4reps.mat') 
 load('D:\SynologyDrive\=data=\F_halfcosine_marm_NatVoc.mat') 
-
-K = 20;
-R = Rs{20};
+% load('D:\SynologyDrive\=data=\F_halfcosine_marm_LZVoc_Allmix.mat') 
 
 %%
+K = 6;
+R = Rs{1};
+
+%
 nFeat       = size(F.F_mat,1);
 result_p = zeros(nFeat,K);
 result_r = zeros(nFeat,K);
@@ -25,15 +27,14 @@ for iComp = 1:K
     end
 end
 
-% ===========================================
+%% ===========================================
 % plot feature correlations
 scr_size = get(0,'ScreenSize');
 scr_size = scr_size(3:4); %width and height
 % f1 = figure,set(gcf,'position',[1,scr_size(2)./2,scr_size(1),scr_size(2)./3]);
 % f2 = figure,set(gcf,'position',[1,1,scr_size(1),scr_size(2)./3]);
-f = figure; 
-set(gcf,'position',[1,1,0.8.*scr_size]); 
-set(gcf, 'color','w')
+f = figurex([1,1,0.8.*scr_size]); 
+
 % ind = [1 2 5 6 4 3];
 % ind = [1 2 3 4 5 6]; % plot order
 % ind = [3 2 4 6 5 1]; % 80Z
@@ -69,7 +70,7 @@ for i = 1:K
         size(F.spectemp_mod,1), size(F.spectemp_mod,2));
     cmax = max(max(  abs( result_r(F.nFreq+1 : F.nFreq+F.nSpectemp,1:K) )  )); 
     imagesc(flipud(spectemp_r),[-cmax, cmax]), colormap('jet')
-%     colorbar
+    colorbar
     set(gca,'ytick',1:2:length(F.spec_mod_rates))
     set(gca,'yticklabels',arrayfun(@num2str,fliplr(F.spec_mod_rates(1:2:end)),'UniformOutput',false))
     set(gca,'xtick',1:2:length(F.temp_mod_rates)-1)

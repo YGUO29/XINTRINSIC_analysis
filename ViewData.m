@@ -1,4 +1,4 @@
-function [X, mov_rel] = ViewData(DataMat, para, opt)
+function [X, mov_rel] = ViewData_AvgFirst(DataMat, para, opt)
 % convert pre-processed data to data matrix for later process
 % DataMat = [rep, trial, height, width, frams]
 
@@ -83,12 +83,12 @@ if strcmp(opt.mode,'avgrep')
     img_rel = zeros(nPanels,para.height,para.width); % img = mean response, rel = relative values
     mov_rel = zeros(nPanels,para.height,para.width,para.nFrame);  % mov = frames of the trial, rel = relative values
     
+    % average all reps
+    mov = squeeze(mean(DataMat(opt.reps,:,:,:,:),1)); % trials x height x width x frames
     for i = 1:nPanels
         iTrial = opt.trials(i);
         % get trial iTrial, all repetitions
-        mov = DataMat(opt.reps, iTrial, :, :, :); 
-        % average across reps
-        mov_mean = squeeze(mean(mov, 1, 'omitnan')); % omit deleted trials
+        mov_mean = squeeze(mov(iTrial, :, :, :)); 
         % calculate deltaF/F (movie)
         img_base = squeeze(mean(mov_mean(:,:,1:floor(para.fr*para.preStim)), 3, 'omitnan')); % pre-stimulus: baseline
         img_base = repmat(img_base,1,1,para.nFrame);
@@ -100,10 +100,10 @@ if strcmp(opt.mode,'avgrep')
     X = reshape(img_rel, nPanels, para.width*para.height);
     
     fnametemp = para.filename;
-%     vnametemp = [para.pathname, para.filename(1:end-4), '_trial', ...
-%         num2str(opt.trials(1)),'-',num2str(opt.trials(end)),'.avi']; 
-    vnametemp = [para.pathname, para.sessionname, '_trial', ...
-        num2str(opt.trials(1)),'-',num2str(opt.trials(end)),'.avi'];
+    vnametemp = [para.pathname, para.filename(1:end-4), '_trial', ...
+        num2str(opt.trials(1)),'-',num2str(opt.trials(end)),'_sat=', num2str(opt.ampLimit(2)), '.avi']; 
+%     vnametemp = [para.pathname, para.sessionname, '_trial', ...
+%         num2str(opt.trials(1)),'-',num2str(opt.trials(end)),'.avi'];
 
     
 %% Plot each repetitions (opt.trials can only be one number)
@@ -154,10 +154,16 @@ switch opt.plotMode
 %             list = dir(fullfile(folder_sound,'*.wav'));
 %             names_sound = natsortfiles({list.name})';
 %             [sounddata,fs] = audioread(fullfile(folder_sound,names_sound{opt.trials})); 
-
+            if ~isfield(opt, 'sounddata')
             % ==== for manual selection ====
             [file,path] = uigetfile('*.wav','Select the sound file','D:\SynologyDrive\=sounds=\');
             [sounddata,fs] = audioread(fullfile(path,file)); 
+            else 
+                fs = 1e5;
+                tstart = (para.durStim+para.preStim+para.postStim) * (opt.trials - 1) * fs + 1;
+                tend = (para.durStim+para.preStim+para.postStim) * opt.trials * fs;
+                sounddata = opt.sounddata(floor(tstart):floor(tend));
+            end
             % start a video writer object
             videoFWriter = vision.VideoFileWriter(vnametemp,...
             'FileFormat',       'AVI',...

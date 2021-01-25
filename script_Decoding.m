@@ -6,15 +6,18 @@ folder_sound = 'D:\SynologyDrive\=sounds=\Natural sound\Natural_JM_XINTRINSIC_wi
 list = dir(fullfile(folder_sound,'*.wav'));
 
 %% Load data (DataMat)
-animal = '96B'; 
-session = 'NatVoc';
-datapath = 'D:\SynologyDrive\=data=\XINTRINSIC';
-load([datapath, '\', animal, '\DataMat_', animal, '_', session, '_', num2str(para.nRep), 'reps.mat'])
-
+% animal = '96B'; 
+% session = 'NatVoc';
+% datapath = 'D:\SynologyDrive\=data=\XINTRINSIC';
+% load([datapath, '\', animal, '\DataMat_', animal, '_', session, '_', num2str(para.nRep), 'reps.mat'])
 % [DataMat, para] = getDataMat;
 
+[file, datapath] = uigetfile('D:\SynologyDrive\=data=\XINTRINSIC\*.mat');
+load(fullfile(datapath, file))
+
 opt             = struct;
-opt.tWindow     = [para.preStim, para.preStim + para.durStim + 4];
+% opt.tWindow     = [para.preStim, para.preStim + para.durStim + 4];
+opt.tWindow     = [para.preStim, para.preStim + para.durStim];
 [X1, ~, X_sep] = getX(DataMat, para, opt);
 % X_sep: [nRep, nStim, height, width, frames]
 % X_sep = X_sep(:,:,:,20:110, :); % cut part of the image (width)
@@ -53,8 +56,8 @@ for i = 1:para.nRep % i: the repetition for TEST
 % Tr.colors    = C.colors(C.category_assignments,:);
 
     % train on identification task
-%     md = fitcecoc(Tr.resp,Tr.name, 'Learners', 'knn'); % adding NumNeighbors did not improve results
-    md = fitcknn(Tr.resp,Tr.name);
+    md = fitcecoc(Tr.resp,Tr.name); % adding NumNeighbors did not improve results
+%     md = fitcknn(Tr.resp,Tr.name);
     % train on classification task
 %     md = fitcecoc(Tr.resp,Tr.category); % adding NumNeighbors did not improve results
 %     md = fitcknn(Tr.resp,Tr.category);
@@ -78,8 +81,8 @@ toc
 %%
 figurex; hold on
 boxplot(PercCorrect1')
-% line([0 8], [1/165 1/165], 'LineStyle', '--')
-line([0 8], [1/11 1/11], 'LineStyle', '--')
+line([0 8], [1/165 1/165], 'LineStyle', '--')
+% line([0 8], [1/11 1/11], 'LineStyle', '--')
 
 set(findobj(gca,'type','line'),'linew',2)
 % xticklabels({'Nearest neighbor', 'SVM', 'Nearest neighbor', 'SVM'})

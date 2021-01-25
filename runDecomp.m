@@ -67,6 +67,11 @@ for k = 1:nK
             PLOT_FIGURES = 0;
             % ========= reverse the sign for X for intrinsic imaging ========
             tic,[R{k}, W{k}] = nonparametric_ica(X, K, RANDOM_INITS, PLOT_FIGURES);toc
+            
+            % adjust order of W by absolute values
+            [~, ind] = sort( mean(abs(W{k}), 2), 'descend');
+            W{k} = W{k}(ind, :);
+            R{k} = R{k}(:, ind);
 %             X_hat{k} = R{k} * W{k};
             if isfield(opt, 'X_test')
                 X_test = opt.X_test;
