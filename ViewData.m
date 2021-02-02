@@ -1,4 +1,4 @@
-function [X, mov_rel] = ViewData_AvgFirst(DataMat, para, opt)
+function [X, mov_rel, mov_rel_sep] = ViewData(DataMat, para, opt)
 % convert pre-processed data to data matrix for later process
 % DataMat = [rep, trial, height, width, frams]
 
@@ -82,21 +82,35 @@ if strcmp(opt.mode,'avgrep')
     nPanels = length(opt.trials);
     img_rel = zeros(nPanels,para.height,para.width); % img = mean response, rel = relative values
     mov_rel = zeros(nPanels,para.height,para.width,para.nFrame);  % mov = frames of the trial, rel = relative values
-    
+    mov_rel_sep = zeros(length(opt.reps), nPanels,para.height,para.width,para.nFrame);
     % average all reps
-    mov = squeeze(mean(DataMat(opt.reps,:,:,:,:),1)); % trials x height x width x frames
+%     mov = squeeze(mean(DataMat(opt.reps,:,:,:,:),1)); % trials x height x width x frames
+
     for i = 1:nPanels
         iTrial = opt.trials(i);
-        % get trial iTrial, all repetitions
-        mov_mean = squeeze(mov(iTrial, :, :, :)); 
-        % calculate deltaF/F (movie)
-        img_base = squeeze(mean(mov_mean(:,:,1:floor(para.fr*para.preStim)), 3, 'omitnan')); % pre-stimulus: baseline
-        img_base = repmat(img_base,1,1,para.nFrame);
-        mov_rel(i,:,:,:) = (mov_mean - img_base)./img_base;
-        % calculate deltaF/F (averaged image, time window determined by opt.tWindow)
-        img_rel(i,:,:) = squeeze(mean(mov_rel(i,:,:,floor(para.fr*opt.tWindow(iTrial, 1))+1 : floor(para.fr*opt.tWindow(iTrial, 2))),4, 'omitnan'));  
+%         % get trial iTrial, all repetitions
+%         mov_mean = squeeze(mov(iTrial, :, :, :));            
+%         % calculate deltaF/F (movie)
+%         img_base = squeeze(mean(mov_mean(:,:,1:floor(para.fr*para.preStim)), 3, 'omitnan')); % pre-stimulus: baseline
+%         img_base = repmat(img_base,1,1,para.nFrame);
+%         mov_rel(i,:,:,:) = (mov_mean - img_base)./img_base;
+%         % calculate deltaF/F (averaged image, time window determined by opt.tWindow)
+%         img_rel(i,:,:) = squeeze(mean(mov_rel(i,:,:,floor(para.fr*opt.tWindow(iTrial, 1))+1 : floor(para.fr*opt.tWindow(iTrial, 2))),4, 'omitnan'));  
+        for j = 1:length(opt.reps)
+            iRep = opt.reps(j);
+            img_base =  squeeze(mean(DataMat(iRep, iTrial, :, :, 1:floor(para.fr*para.preStim)), 5, 'omitnan')); 
+            img_base = repmat(img_base, 1, 1, para.nFrame);
+            mov_rel_sep(j,i,:,:,:) = (squeeze((DataMat(iRep, iTrial, :,:,:))) - img_base)...
+                ./img_base;
+        end
+        
     end
-    % data matrix X [#Stim, #Pixel]
+    
+    mov_rel = squeeze(mean(mov_rel_sep, 1));
+    for i = 1:nPanels
+        img_rel(i,:,:) = squeeze(mean(mov_rel(i,:,:,floor(para.fr*opt.tWindow(iTrial, 1))+1 : floor(para.fr*opt.tWindow(iTrial, 2))),4, 'omitnan'));    
+    end% data matrix X [#Stim, #Pixel]
+    
     X = reshape(img_rel, nPanels, para.width*para.height);
     
     fnametemp = para.filename;
@@ -226,7 +240,7 @@ switch opt.plotMode
         title(['time = ',num2str(i*(1./para.fr),'%-5.1f')])
         pause(1/para.fr)
 
-        if opt.saveON   
+         if opt.saveON   
             if strcmp(opt.color, 'green')
             % save video (in green/black color) and audio
             MAX =           opt.ampLimit(2);

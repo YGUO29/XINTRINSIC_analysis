@@ -26,9 +26,19 @@ end
 % ha = tight_subplot(max(Ks), max(Ks), [.01 .01],[.1 .01],[.01 .01]);
 if strcmp(opt.method, 'PCA')
     k = 1; % store Rs and Ws in only one cell
-    [U, S, V] = svd(X, 'econ');
+    % de-mean of X!!!!!!!!!!!!!!!!!!
+    % demean rows of the data matrix
+    X_zero_mean_rows = nan(size(X));
+    for i = 1:size(X,1)
+        X_zero_mean_rows(i,:) = X(i,:) - mean(X(i,:));
+    end
+
+    [U, S, V] = svd(X_zero_mean_rows, 'econ');
     R{k} = U(:, 1:Ks)';
     W{k} = V(:, 1:Ks)';
+    % orient so that average weights are positive
+        R{k} = R{k} .* repmat(sign(mean(W{k},2)), 1, size(X,1));
+        W{k} = W{k} .* repmat(sign(mean(W{k},2)), 1, size(X,2));
     recon_error = diag(S)./sum(diag(S));
     if opt.plotON
         % for plot components.

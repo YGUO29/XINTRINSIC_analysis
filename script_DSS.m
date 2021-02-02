@@ -88,11 +88,11 @@ R_test = D_test_rep2 * pinv(W);
 D_test_rep2_denoised = R_test * W;
 % 
 % % calculate correlation
-corr_matrix(:,k) = diag(corr(D_test_rep1_denoised, D_test_rep2));
+% corr_matrix(:,k) = diag(corr(D_test_rep1_denoised, D_test_rep2));
 
-% R_test_allrep = D_test_allrep * pinv(W);
-% D_test_allrep_denoised = R_test_allrep * W;
-% corr_matrix(:,k) = diag(corr(D_test_allrep_denoised, D_test_allrep));
+R_test_allrep = D_test_allrep * pinv(W);
+D_test_allrep_denoised = R_test_allrep * W;
+corr_matrix(:,k) = diag(corr(D_test_allrep_denoised, D_test_allrep));
 end
 
 % plot upper-bound and one-split correlation of each pixel
@@ -151,7 +151,7 @@ end
 % average whitened matrix across repetitions
 D_whiten_avg = squeeze(mean(D_whiten,1));
 
-k = 4;
+k = 8;
 [U, S, V] = svd(D_whiten_avg);
 R = U(:,1:k)*S(1:k,1:k);
 
@@ -174,4 +174,4 @@ opt.nRows = 1;
 opt.plotON = 1;
 Ks = k;
 % opt.X_test = X_test;
-[Rs, Ws, comp, recon_error, X_hats] = runDecomp(X, Ks, opt, para);
+[Rs, Ws, comp, recon_error, X_hats] = runDecomp(X_denoise, Ks, opt, para);

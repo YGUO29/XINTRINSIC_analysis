@@ -3,6 +3,7 @@
 %% Calculate MTF matrix (nSM x nTM x nPix)
 S.sm            = [0, 1/8, 1/4, 1/2, 1, 2, 4, 8];
 S.tm            = [1/2, 1, 2, 4, 8, 16, 32, 64, 128];
+% S.tm            = [1/2, 1, 2, 4, 8, 16, 32, 64];
 S.tm            = [fliplr(-S.tm), 0, S.tm]; % all TM rates
 nSM = length(S.sm);
 nTM = length(S.tm);
@@ -49,9 +50,16 @@ end
 bTM = zeros(1, nPix);
 bSM = bTM;
 for i = 1:nPix
-    MTF_temp = MTF(:,:,i);
+    % reverse sign here for intrinsic!!
+    MTF_temp = - MTF(:,:,i);
     
     [row, col] = find(MTF_temp == max(MTF_temp(:)));
+    
+%     mF1 = mean(MTF_temp,2); % marginal tuning for F1
+%     [~, row] = max(mF1);
+%     mF2 = mean(MTF_temp,1); % marginal tuning for F2
+%     [~, col] = max(mF2);    
+    
     if length(row) > 1 || length(col) > 1
         bSM(i) = NaN;
         bTM(i) = NaN;
@@ -73,12 +81,15 @@ ax.ButtonDownFcn = @mouseClick
 % CT = cbrewer('qual', 'Paired', 8); colormap(CT)
 colormap(parula(8)), 
 title('Best spectral modulation')
-
+colorbar('Ticks',1:length(S.sm),...
+         'TickLabels',arrayfun(@num2str,S.sm,'UniformOutput',false));
 figurex;
 imagesc(bTM), axis image, colorbar
-% CT = cbrewer('qual', 'Paired', 19); colormap(CT)
-colormap(parula(17)),
+CT = cbrewer('div','RdBu',17); colormap(CT)
+% colormap(parula(17)),
 title('Best temporal modulation')
+colorbar('Ticks',1:2:length(S.tm),...
+         'TickLabels',arrayfun(@num2str,S.tm(1:2:end),'UniformOutput',false));
 %% plot all MTF for all pixels
 figurex([1440         351        1066         987]); 
 imagesc(flipud(MTF_mean)); colormap(jet), colorbar, axis image

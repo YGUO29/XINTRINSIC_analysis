@@ -11,9 +11,9 @@ cmap = HueRedist('HSVadjusted', 'Circular'); % 299 numbers in HSV space
 switch display_mode 
     case 1
         bfs = reshape(max_ind, para.height, para.width);
-%         cmap = hsv(length(freqs));
         cmap = interp1(0:length(cmap)-1, cmap, linspace(0, length(cmap)-1, length(freqs))');
         cmap = hsv2rgb([cmap, ones(size(cmap)), ones(size(cmap))]);
+%         cmap = hsv(length(freqs));
         tonotopy_rgb = cmap(bfs, :);
     case 2
         X_rectified = X;
@@ -69,8 +69,8 @@ end
 % display mode: 1 = winner take all; 2 = weighted average
 display_mode = 2;
 
-octaves = 0:8; % one octave apart
-% octaves = 0:1/12:8; % one semitone apart
+% octaves = 0:8; % one octave apart
+octaves = 0:1/12:8; % one semitone apart
 freqs = 110.*2.^octaves;
 [max_amp, max_ind] = max(X, [], 1); % find max amplitude (and frequency index) for each pixel
 cmap = HueRedist('HSVadjusted', 'Circular'); % 299 numbers in HSV space

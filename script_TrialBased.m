@@ -37,7 +37,7 @@ if ~iscell(file_mat) % only load one file
             para.filename = file_mat;
             para.pathname = path_mat;
         else
-            DataMat(para.nRep+1 : para.nRep+size(P.ProcDataMat,1),:,:,:,:) = squeeze(P.ProcDataMat);
+            DataMat(para.nRep+1 : para.nRep+size(P.ProcDataMat,1),:,:,:,:) = squeeze(P.ProcDataMat(:,:,6:95,:,:));
             para.nRep = para.nRep + size(P.ProcDataMat, 1);
         end
 %         clear S P
@@ -77,6 +77,8 @@ end
 size(DataMat)
 para
 %% View data
+% DataMat = DataMat(:,:,6:95, :,:);
+% para.height = 90;
 opt = struct;
 % ==== simplified, just get data matrix X and DataMat_norm ====
 %     opt.trials = 162; 
@@ -87,14 +89,14 @@ opt = struct;
 % ==== get data matrix X and view/save the video ====
     opt.ampLimit    = 0.15.*[-1 1];
 %     opt.reps          = [1:11+3, 11+6:para.nRep];
-%     opt.trials        = i; 
+%     opt.trials        = 1; 
 %     opt.omit_trials   = [12 16 30 36 48 48 16 16];
 %     opt.omit_reps     = [1 1 1 1 1 5 7 10];
 
 %     opt.tWindow       = [para.preStim, para.preStim + para.durStim]; % intrinsic natural sound: integrate until 4s after sound offset
 %     opt.tWindow     = [para.preStim.*ones(para.nStim,1), para.preStim.*ones(para.nStim,1) + dur_mat'];
 
-    opt.p             = [para.nStim/36, 36]; % subplot rows and columes; 
+%     opt.p             = [4 15]; % subplot rows and columes; 
 %     opt.mode          = 'allrep';
 %     opt.plotMode      = 'separate';
 %     opt.saveON        = 1;
@@ -105,7 +107,7 @@ opt = struct;
 %     para.sessionname  = ['102D_210108_music_RiB_cutoff=', num2str(opt.ampLimit(2))];
     f = figurex;
     tic
-    [X, DataMat_norm] = ViewData(DataMat, para, opt); 
+    [X, DataMat_norm, mov_rel_sep] = ViewData(DataMat, para, opt); 
     toc
 % ======== construct a X without NaN (X may contain NaNs if there are masked pixels) ========
 [~, ind_delete]     = find( isnan(X) ); % linear index
@@ -124,8 +126,8 @@ datapath = 'D:\SynologyDrive\=data=\XINTRINSIC';
 %     'DataMat_reg', 'para', '-v7.3')
 save([datapath, '\', animal, '\DataMat_', modal, '_', date, '_', animal, '_', session, '_', num2str(para.nRep), 'reps.mat'],...
     'DataMat', 'para', '-v7.3')
-% save([datapath, '\', animal, '\DataMatNorm_', modal, '_', date, '_', animal, '_', session, '_', num2str(para.nRep), 'reps.mat'],...
-%     'DataMat_norm', 'para', '-v7.3')
+save([datapath, '\', animal, '\DataMatNorm_', modal, '_', date, '_', animal, '_', session, '_', num2str(para.nRep), 'reps.mat'],...
+    'DataMat_norm', 'para', '-v7.3')
 save([datapath, '\', animal, '\DataMatProc_', modal, '_', date, '_', animal, '_', session, '_', num2str(para.nRep), 'reps.mat'],...
     'X', 'para', '-v7.3')
 %% save as python format
@@ -137,12 +139,18 @@ opt.fluo = 1;
 opt.method = 'mICA'; % 'mICA' or 'NMF' or 'PCA'
 opt.nRows = 1;
 opt.plotON = 1;
-Ks = 1:20;
+Ks = 1:10;
 
 % opt.X_test = X_test;
 figurex;
 [Rs, Ws, comp, recon_error, X_hats] = runDecomp(X, Ks, opt, para);
 
+if strcmp(opt.method, 'PCA')
+    % scree plot
+    figurex; plot(cumsum(recon_error)./sum(recon_error))
+    ylabel('Variance explained')
+    xlabel('Number of components')
+end
 %% View X
 opt.ampLimit    = 0.5.*[-1 1];
 
@@ -155,27 +163,29 @@ for i = 3350:3450
 end
 
 %% get response profiles for components
-R = Rs{5};
+R = Rs{6};
 plot_on = 1;
-% [I_inorder, R_inorder, tags_inorder, snames_inorder] = getResponseProfile_LZVoc_mix(R,plot_on);
+[I_inorder, R_inorder, tags_inorder, snames_inorder] = getResponseProfile(R,plot_on);
 
-[I_inorder, R_inorder, tags_inorder, snames_inorder] = getResponseProfile_LZVoc_major(R, plot_on);
+% [I_inorder, R_inorder, tags_inorder, snames_inorder] = getResponseProfile_LZVoc_mix(R,plot_on);
+% [I_inorder, R_inorder, tags_inorder, snames_inorder] = getResponseProfile_LZVoc_major(R, plot_on);
 % [I_inorder, R_inorder, tags_inorder, snames_inorder] = getResponseProfile_NatVoc(R, plot_on);
 %% select sound to plot cochleogram & corresponding response pattern
 addpath('D:\SynologyDrive\=code=\Sound_analysis\')
-folder_sound = 'D:\SynologyDrive\=sounds=\Vocalization\temp_for capsule\AllMix_Orig_norm\';
+folder_sound = 'D:\SynologyDrive\=sounds=\Natural sound\Natural_JM original\';
 load('D:\SynologyDrive\=data=\SpecTempParameters_Yueqi')
 list = dir(fullfile(folder_sound,'*.wav'));
 names_sound = natsortfiles({list.name})';
 nSound = 6;
 
-% ind = 1:nSound; % desending order
+ind = 1:nSound; % desending order
 ind = length(list): -1 : length(list) - nSound + 1; % reversed order
 
-for iComp = 6
-    figure('Name',['Component ',num2str(iComp)]), set(gcf, 'color','w')
+for iComp = 2:6
+    figurex;
+%     ('Name',['Component ',num2str(iComp)]), set(gcf, 'color','w')
     set(gcf,'Position',[1 41 3440 1323])
-    ha = tight_subplot(1, nSound, 0.01, [.1 .01], [0.05 .01]);
+    ha = tight_subplot(2, nSound, 0.01, [.1 .01], [0.05 .01]);
     for i = 1:nSound
         Sd.SoundName = names_sound{I_inorder(ind(i),iComp)};
         filename = [folder_sound,Sd.SoundName];
@@ -193,16 +203,17 @@ for iComp = 6
             axis off
         end
         drawnow
-    end
     
+%     
     % plot the response patterns 
-    figure('Name',['Component ',num2str(iComp)]), set(gcf,'color','white')
-%     opt.ampLimit    = 0.15.*[-1 1];
-    opt.trials      = I_inorder(ind, iComp);
-    for i = 1:nSound
-        img_temp = reshape( X(I_inorder(ind(i), iComp),:), para.height, para.width );
-        subplot(1,nSound,i)
-        imagesc(img_temp, opt.ampLimit), colormap(jet), axis image
+%     figure('Name',['Component ',num2str(iComp)]), set(gcf,'color','white')
+    opt.ampLimit    = 0.18.*[-1 1];
+    opt.trials      = I_inorder(ind(i), iComp);
+    img_temp = reshape( X(I_inorder(ind(i), iComp),:), para.height, para.width );
+    axes(ha(i+nSound));
+    imagesc(img_temp, opt.ampLimit), colormap(jet), axis image
+    colorbar
+    drawnow
     end
 end
 

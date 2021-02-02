@@ -3,12 +3,12 @@
 % need: R (response matrix of each component), K (number of components)
 % load('D:\=code=\Sound_analysis\F_test.mat') 
 % load('D:\SynologyDrive\=data=\F_halfcosine_marm_4reps.mat') 
-load('D:\SynologyDrive\=data=\F_halfcosine_marm_NatVoc.mat') 
+load('D:\SynologyDrive\=data=\F_halfcosine_marm.mat') 
 % load('D:\SynologyDrive\=data=\F_halfcosine_marm_LZVoc_Allmix.mat') 
 
 %%
-K = 6;
-R = Rs{1};
+K = 10;
+R = Rs{K};
 
 %
 nFeat       = size(F.F_mat,1);
@@ -49,9 +49,11 @@ for i = 1:K
     plot(F.FreqBounds(1:end-1), result_r(1:F.nFreq,ind(i)), 'linewidth',4,'Marker','x')
     hold on, plot([F.FreqBounds(1:2), F.FreqBounds(end-1)], [0 0 0],'linestyle','--','color','k')    
     set(gca,'xscale','log');
-    ymax = max(max(  abs( result_r(1:F.nFreq,1:K) )  )); ylim([-0.77,0.77]);
+%     ymax = max(max(  abs( result_r(1:F.nFreq,1:K) )  )); ylim([-0.77,0.77]);
+    ymax = max(max(  abs( result_r(1:F.nFreq,1:K) )  )); ylim([-0.77,1]);
+
     set(gca,'xtick',F.FreqBounds(1:2:end))
-    set(gca,'ytick',-0.6:0.2:0.6)
+    set(gca,'ytick',-0.6:0.2:1)
     set(gca,'xticklabels',arrayfun(@num2str,F.FreqBounds(1:2:end-1),'UniformOutput',false))
     set(gca,'fontsize',24);
     axis square

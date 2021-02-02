@@ -1,8 +1,8 @@
 % compare two conditions - get differential maps and statistics
 %% compare two sets of trials
 % X1 = X(1:size(X,1)/2, :); X2 = X(size(X,1)/2+1:end, :);
-X2 = X(2:2:24,:);
-X1 = X(1:2:24,:); 
+X1 = X(31:2:60,:); 
+X2 = X(32:2:60,:);
 
 figurex;
 % for i = 1:4
@@ -16,6 +16,27 @@ figurex;
 %     title('Red: Trill-phee > Trill')
     % colormap(cbrewer('div', 'RdBu', 256))
 % end
+%%
+Titles = {'Phee', 'Trillphee', 'Trill', 'Twitter'};
+figurex;
+indices = nchoosek(1:4,2);
+
+for i = 1:6
+    ind = indices(i,:);
+    subplot(2,3,i)  
+    img = X_temp{ind(1)} - X_temp{ind(2)};
+%     img = X((i-1)*36+[1:36],:);
+%     X_temp{i} = mean(img,1);
+%     eval(['temp = mean(X',num2str(i),', 1);']);
+%     img = mean(X1 - X2, 1); % X1: Original, X2: modified
+    Max = max(abs(img));
+%     Max = 0.08;
+    imagesc(reshape(img, para.height, para.width), [-Max, Max].*0.9), 
+    axis image, colorbar
+    colormap(jet)
+    title([Titles{ind(1)}, ' - ', Titles{ind(2)}])
+%     colormap(cbrewer('div', 'RdBu', 256))
+end
 %% get statistics
 [~,p,~,stats] = ttest2(X1, X2);
 

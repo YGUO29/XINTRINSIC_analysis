@@ -60,7 +60,8 @@ for i = 1:length(ind)
     end
     
     for i = 1:4
-        text(100, max(resp)*2/3 - 0.2*(i-1), ...
+        % 0.05 or 0.2
+        text(100, max(resp)*2/3 - 0.05*(i-1), ...
         C.category_labels(i), 'Color', Color(i,:),...
         'FontSize',14)
     end
