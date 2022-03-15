@@ -5,7 +5,7 @@ list = dir(fullfile(folder_origin,'*.wav'));
 snames = natsortfiles({list.name})';
 
 % Load Sam's catagory labels directly
-load('D:\SynologyDrive\=data=\category_regressors_LZVoc_major.mat')
+load('D:\SynologyDrive\=data=\category_regressors_VocLZ_AllMajor.mat')
 % C = C_voc;
 tags = C.category_assignments; 
 nTags = max(tags);
@@ -34,9 +34,11 @@ snames_inorder = cell(size(tags_inorder));
 if plot_on 
     figurex; 
 end
+
 % ind = [3 2 4 6 5 1]; % for 80Z
 % ind = [4 2 3 5 1 6]; % for 132D, session 2
 ind = 1:size(R,2);
+
 for i = 1:length(ind)
     if size(R,2) >= ind(i)
         resp = R_inorder(:,ind(i)); index = I_inorder(:,ind(i));
@@ -61,16 +63,13 @@ for i = 1:length(ind)
     
     for i = 1:4
         % 0.05 or 0.2
-        text(100, max(resp)*2/3 - 0.05*(i-1), ...
+        text(100, max(resp)*2/3 - 0.1*(i-1), ...
         C.category_labels(i), 'Color', Color(i,:),...
         'FontSize',14)
     end
 
 end
 
-
-
-% if plot_on; figure; end
 % for i = 4:6
 %     if size(R,2) >= i
 %         resp = R_inorder(:,i); index = I_inorder(:,i);

@@ -1,8 +1,9 @@
-function getResponseProfile_ModelMatch(R,plot_on)
+function [I_inorder, R_inorder, tags_inorder, snames_inorder] = getResponseProfile_ModelMatch(R, plot_on)
 % filelist = dir('\\10.16.58.229\Test_Procedures\==Slides & Documents\Music\naturalsounds165\naturalsounds165')
-folder_origin = 'D:\SynologyDrive\=sounds=\Natural sound\Natural_JM_withLZVoc\withModelMatched';
+folder_origin = 'D:\SynologyDrive\=sounds=\Natural sound\temp_for capsule\NatVoc_Orig+ModelMatched_full_norm_360sounds';
 list = dir(fullfile(folder_origin,'*.wav'));
 snames = natsortfiles({list.name})';
+
 
 % Load Sam's catagory labels directly
 load('D:\SynologyDrive\=data=\category_regressors_withLZvoc.mat')
@@ -10,6 +11,9 @@ load('D:\SynologyDrive\=data=\category_regressors_withLZvoc.mat')
 tags = C.category_assignments; 
 nTags = max(tags);
 Color = C.colors;
+
+% for sounds w/ model-matched sounds
+tags = repelem(tags,2);
 
 
 % [tags,snames] = xlsread([folder_origin,'\NatSound_label'],1);
@@ -27,37 +31,37 @@ Color = C.colors;
 % Color(11,:) = [255 255 0]./255;
 
 %% bar plot figure
-% [R_inorder, I_inorder] = sort(R,'descend');
-% tags_inorder = R;
-% snames_inorder = cell(size(tags_inorder));
-% % close all
-% if plot_on 
-%     figurex; 
-% end
+[R_inorder, I_inorder] = sort(R,'descend');
+tags_inorder = R;
+snames_inorder = cell(size(tags_inorder));
+% close all
+if plot_on 
+    figurex; 
+end
 % % ind = [3 2 4 6 5 1]; % for 80Z
 % % ind = [4 2 3 5 1 6]; % for 132D, session 2
-% ind = 1:size(R,2);
-% for i = 1:length(ind)
-%     if size(R,2) >= ind(i)
-%         resp = R_inorder(:,ind(i)); index = I_inorder(:,ind(i));
-%         tags_inorder(:,ind(i)) = tags(index);
-%         snames_inorder(:,ind(i)) = snames(index);
-%         Color_inorder = Color(tags_inorder(:,ind(i)),:);
-%         if plot_on
-% %             subplot(3,1,i)
-%             subplot(1,length(ind),i)
-%             b = bar(resp,'FaceColor','flat');
-%             title(['Component ',num2str(i)],'fontsize',16)
-%             b.CData = Color_inorder;
-%             ylim([-0.5 2.5]), xlim([1 size(R,1)])
-%             xticks([1 size(R,1)])
-%             set(gca,'fontsize',24)
-%             axis square
-% 
-%         end
-%     else break
-%     end
-% end
+ind = 1:size(R,2);
+for i = 1:length(ind)
+    if size(R,2) >= ind(i)
+        resp = R_inorder(:,ind(i)); index = I_inorder(:,ind(i));
+        tags_inorder(:,ind(i)) = tags(index);
+        snames_inorder(:,ind(i)) = snames(index);
+        Color_inorder = Color(tags_inorder(:,ind(i)),:);
+        if plot_on
+%             subplot(3,1,i)
+            subplot(1,length(ind),i)
+            b = bar(resp,'FaceColor','flat');
+            title(['Component ',num2str(i)],'fontsize',16)
+            b.CData = Color_inorder;
+            ylim([-2 2.5]), xlim([1 size(R,1)])
+            xticks([1 size(R,1)])
+            set(gca,'fontsize',24)
+            axis square
+
+        end
+    else break
+    end
+end
 
 %% plot response amplitude according to catagories
 % RespGroupMean = zeros(6,nTags);
@@ -78,12 +82,12 @@ Color = C.colors;
 %     end
 % end
 %% plot original vs. model matched
-R1 = R(1:2:359, :);
+R1 = R(1:2:end, :);
 R2 = R(2:2:end, :);
 
 figurex;
 for iComp = 1:size(R,2)
-    h(iComp) = subplot(2,3,iComp);
+    h(iComp) = subplot(2,5,iComp);
     gscatter(R1(:, iComp), R2(:, iComp), C.category_assignments, C.colors)
     axis square
     hold on,

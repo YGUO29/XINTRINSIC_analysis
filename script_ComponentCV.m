@@ -1,4 +1,4 @@
-% Methods to determine the number of components, by calculating variance
+ata% Methods to determine the number of components, by calculating variance
 % explained by these components
 % opt = struct;
 % opt.tWindow = [para.preStim, para.preStim + para.durStim];
@@ -10,10 +10,15 @@ if para.height == 100
     DataMat = DataMat(:,:,6:95,:,:);
     para.height = 90;
 end
-%% construct dataset
+%% construct dataset, PCA
+% DataMat = DataMat(:,31:2:end,:,:,:); para.nStim = 165;
+
 set_V = nchoosek(1:para.nRep,2);
 % ============= changed permutation number here ========
-nPerm = size(set_V,1);
+% nPerm = size(set_V,1);
+nPerm = 50;
+set_V = set_V(randperm(size(set_V,1), nPerm), :);
+
 % construct Xs (for every repetition)
 opt = struct;
 [X, ~, mov_rel_sep] = getX(DataMat, para, opt);
@@ -24,7 +29,7 @@ elseif isfield(opt, 'tWindow') && length(opt.tWindow) == 2 % specified, same dur
     opt.tWindow = repmat(opt.tWindow, para.nStim, 1);    
 else % specified, different durations
 end
-
+        
 Xs = zeros(size(X,1), size(X,2), para.nRep);
 for iRep = 1:para.nRep
     for iTrial = 1:para.nStim
@@ -34,7 +39,6 @@ for iRep = 1:para.nRep
 end
 
 % PCA
-
 result = zeros(para.nRep, 2, nPerm); % second dimension: measure 1 and measure 2 
 
 for iPerm = 1:nPerm
@@ -56,7 +60,7 @@ for iPerm = 1:nPerm
     end
     [U,S,~] = svd(X_zero_mean_rows,'econ');
     
-    for K = 1:para.nRep % number of components  
+    for K = 1:12 % number of components  
         % PCA decomposition
         R = U(:,1:K) * S(1:K,1:K);
 %         W = V(:,1:K)';
@@ -98,7 +102,36 @@ for iPerm = 1:nPerm
 end
 
 %% ICA
+DataMat = DataMat(:,31:2:end,:,:,:); para.nStim = 165;
+
+set_V = nchoosek(1:para.nRep,2);
+% ============= changed permutation number here ========
+% nPerm = size(set_V,1);
+nPerm = 50;
+set_V = set_V(randperm(size(set_V,1), nPerm), :);
+
+% construct Xs (for every repetition)
+opt = struct;
+[X, ~, mov_rel_sep] = getX(DataMat, para, opt);
+if ~isfield(opt, 'tWindow')
+    opt.tWindow = [para.preStim, para.preStim + para.durStim];
+    opt.tWindow = repmat(opt.tWindow, para.nStim, 1);
+elseif isfield(opt, 'tWindow') && length(opt.tWindow) == 2 % specified, same durations
+    opt.tWindow = repmat(opt.tWindow, para.nStim, 1);    
+else % specified, different durations
+end
+        
+Xs = zeros(size(X,1), size(X,2), para.nRep);
+for iRep = 1:para.nRep
+    for iTrial = 1:para.nStim
+        mean_img = squeeze(mean(mov_rel_sep(iRep, iTrial,:,:,floor(para.fr*opt.tWindow(iTrial, 1))+1 : floor(para.fr*opt.tWindow(iTrial, 2))),5));  
+        Xs(iTrial, :, iRep) = reshape(mean_img, para.height*para.width,1);
+    end
+end
+
+% ICA
 result = zeros(para.nRep, 2, nPerm); % second dimension: measure 1 and measure 2 
+
 for K = 1:para.nRep % number of components
     for iPerm = 1:nPerm
         
@@ -113,19 +146,9 @@ for K = 1:para.nRep % number of components
         % === ====== reverse the sign for X for intrinsic imaging ========
         
         % ==== ICA ====
-%         RANDOM_INITS = 10;      
-%         PLOT_FIGURES = 0;
-%         tic,[R, W] = nonparametric_ica( X, K, RANDOM_INITS, PLOT_FIGURES);toc
-        
-        % ==== PCA ====
-        X_zero_mean_rows = nan(size(X));
-        for i = 1:size(X,1)
-            X_zero_mean_rows(i,:) = X(i,:) - mean(X(i,:));
-        end
-        % PCA decomposition
-        [U,S,V] = svd(X_zero_mean_rows,'econ');
-        R = U(:,1:K) * S(1:K,1:K);
-        W = V(:,1:K)';
+        RANDOM_INITS = 10;      
+        PLOT_FIGURES = 0;
+        tic,[R, W] = nonparametric_ica( X, K, RANDOM_INITS, PLOT_FIGURES);toc
 
         V = zeros(2, para.nStim, para.width*para.height);
         ind_V = set_V(iPerm,:);
@@ -133,8 +156,6 @@ for K = 1:para.nRep % number of components
         for i = 1:2
             ind = ind_V(i);
             V(i,:,:) = Xs(:,:,ind);
-%             opt.reps = ind;
-%             V(i,:,:) = getX(DataMat, para, opt);
         end
 
         V1 = squeeze(V(1,:,:)); 
@@ -163,6 +184,7 @@ for K = 1:para.nRep % number of components
 end
 
 %%
+% save('D:\SynologyDrive\=data=\Results\CVresult_80Z_Nat_PCA.mat','result')
 figure, set(gcf,'color','w')
 Y = mean(result,3);
 E = std(result,[],3);

@@ -58,7 +58,7 @@ else
     if ischar(opt.color)
         switch opt.color 
             case 'green'; cmap = jet(256); % save in green mode, display in jet
-            otherwise; cmap = eval([opt.color, '(256)']); % save and display in specified cmap 
+            otherwise; cmap = eval([opt.color, '(256)']); cmap = flipud(cmap); % save and display in specified cmap 
         end
     else % save and display in cbrewer maps
         if strcmp(opt.color{2}, 'RdBu'); cmap = flipud(cbrewer(opt.color{1}, opt.color{2}, 256)); % flip red and blue for RdBu map (red = positive)
@@ -106,7 +106,9 @@ if strcmp(opt.mode,'avgrep')
         
     end
     
-    mov_rel = squeeze(mean(mov_rel_sep, 1));
+%     mov_rel = squeeze(mean(mov_rel_sep, 1)); % do not use this, it squeezes every singleton dimensions (including when trial number = 1)
+    mov_rel = mean(mov_rel_sep, 1); mov_rel_size = size(mov_rel);
+    mov_rel = reshape(mov_rel, [mov_rel_size(2:end), 1]);
     for i = 1:nPanels
         img_rel(i,:,:) = squeeze(mean(mov_rel(i,:,:,floor(para.fr*opt.tWindow(iTrial, 1))+1 : floor(para.fr*opt.tWindow(iTrial, 2))),4, 'omitnan'));    
     end% data matrix X [#Stim, #Pixel]
@@ -114,8 +116,13 @@ if strcmp(opt.mode,'avgrep')
     X = reshape(img_rel, nPanels, para.width*para.height);
     
     fnametemp = para.filename;
-    vnametemp = [para.pathname, para.filename(1:end-4), '_trial', ...
+    if ischar(fnametemp)
+        vnametemp = [para.pathname{1}, para.filename(1:end-4), '_trial', ...
         num2str(opt.trials(1)),'-',num2str(opt.trials(end)),'_sat=', num2str(opt.ampLimit(2)), '.avi']; 
+    else
+        vnametemp = [para.pathname{1}, para.filename{1}(1:end-4), '_trial', ...
+        num2str(opt.trials(1)),'-',num2str(opt.trials(end)),'_sat=', num2str(opt.ampLimit(2)), '.avi']; 
+    end
 %     vnametemp = [para.pathname, para.sessionname, '_trial', ...
 %         num2str(opt.trials(1)),'-',num2str(opt.trials(end)),'.avi'];
 
@@ -148,10 +155,16 @@ elseif strcmp(opt.mode, 'allrep')
     mov_rel(i+1,:,:,:) = (mov_mean - img_base)./img_base;
     img_rel(i+1,:,:) = mean(mov_rel(i+1,:,:,floor(para.fr*opt.tWindow(iTrial, 1))+1 : floor(para.fr*opt.tWindow(iTrial, 2))),4, 'omitnan');
     X = reshape(img_rel, nPanels, para.width*para.height);
-    
+    mov_rel_sep = mov_rel;
+   
     fnametemp = para.filename;
-    vnametemp = [para.pathname, para.sessionname, '_trial', num2str(iTrial),'_allreps.avi'];
-%     vnametemp = [para.pathname, para.filename(1:end-4), '_trial', num2str(iTrial),'_allreps.avi'];
+    if ischar(fnametemp)
+        vnametemp = [para.pathname, para.filename(1:end-4), '_trial', ...
+        num2str(opt.trials(1)),'-',num2str(opt.trials(end)),'_sat=', num2str(opt.ampLimit(2)), '.avi']; 
+    else
+        vnametemp = [para.pathname, para.filename{1}(1:end-4), '_trial', ...
+        num2str(opt.trials(1)),'-',num2str(opt.trials(end)),'_sat=', num2str(opt.ampLimit(2)), '.avi']; 
+    end
 end
 
 
@@ -183,8 +196,8 @@ switch opt.plotMode
             'FileFormat',       'AVI',...
             'AudioInputPort',   true,...
             'FrameRate',        para.fr,...
-            'VideoCompressor',	'None (uncompressed)',...
-            'AudioDataType',    'int16');
+            'VideoCompressor',	'None (uncompressed)');   
+%             'AudioDataType',    'int16'
             SoundBatchSampleNum =   round(fs/para.fr);
             SoundSeq =              sounddata;
         else % video without sound

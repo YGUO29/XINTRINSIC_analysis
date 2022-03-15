@@ -33,6 +33,7 @@ end
 img_tone        = imread(filename_tone);
 img_tone        = double(imresize(img_tone,para.height./size(img_tone,1)));
 img_tone_norm   = (img_tone - min(img_tone(:)))./range(img_tone(:));
+
 % the fixed image
 img_exp         = imread(filename_exp);
 img_exp         = double(imresize(img_exp,para.height./size(img_exp,1)));
@@ -40,11 +41,11 @@ img_exp_norm   = (img_exp - min(img_exp(:)))./range(img_exp(:));
 
 if strcmp(opt.mode, 'manual') % used control points to manully align
     [movingpts, fixedpts] = cpselect(img_tone_norm, img_exp_norm, 'wait', true);
-    tform = fitgeotrans(movingpts,fixedpts, opt.manual_method);
+    tform = fitgeotrans(movingpts, fixedpts, opt.manual_method);
 else % audomatic alignment
     % registration
     [optimizer,metric]  = imregconfig(opt.auto_modality);
-    tform               = imregtform(img_tone, img_exp, 'rigid', optimizer, metric);
+    tform               = imregtform(img_tone, img_exp, opt.auto_method, optimizer, metric);
 end
 
 img_tone_reg        = imwarp(img_tone, tform,'OutputView',imref2d(size(img_exp)));

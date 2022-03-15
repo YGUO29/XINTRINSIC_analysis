@@ -91,9 +91,9 @@ para
 % [file_mat,path_mat] = uigetfile('*.mat','Select a mat file to analyze','U:\', 'Multiselect', 'on');
 clear opt_read
 opt_read.animal = '102D'; 
-opt_read.session = 'NatVocMM';
+opt_read.session = 'VocMM';
 opt_read.modal = 'Calcium';
-opt_read.date = '201226';
+opt_read.date = '210511';
 % opt_read.subset = 'Nat'; % only read subset of the data (comment this line if reading all data)
 % 80Z tone session: '50dB'
 [DataMat, para] = readSession(opt_read);
@@ -101,12 +101,9 @@ para.mirror = 1;
 
 DataMat = double(DataMat);
 opt = struct;
-% opt.tWindow = [para.preStim.*ones(para.nStim,1), para.preStim.*ones(para.nStim,1) + dur_mat'];
-% opt.tWindow = [para.preStim.*ones(para.nStim,1), para.preStim.*ones(para.nStim,1) + repelem(dur_mat,2)'];
-
 [X, DataMat_norm, mov_rel_sep] = getX(DataMat, para, opt);
 % generate X matrix for each repetition (used in noise correction)
-X_sep = squeeze(mean(mov_rel_sep(:,:,:,:,floor(para.preStim*para.fr) +1 : floor((para.preStim+para.durStim)*para.fr)),5));
+X_sep = squeeze(mean(mov_rel_sep(:,:,:,:,floor(para.preStim*para.fr) : floor((para.preStim+para.durStim)*para.fr)),5));
 X_sep = reshape(X_sep, para.nRep, para.nStim, para.height*para.width); 
 
 % ======== construct a X without NaN (X may contain NaNs if there are masked pixels) ========
@@ -248,13 +245,13 @@ opt_decomp.fluo = 1;
 opt_decomp.method = 'mICA'; % 'mICA' or 'NMF' or 'PCA'
 opt_decomp.nRows = 1;
 opt_decomp.plotON = 1;
-opt_decomp.Ks = 6;
+opt_decomp.Ks = 4:6;
 para.mirror = 1;
 % para.ct = ct(1);
 
 % opt.X_test = X_test; % to calculate reconstruction error with
 figurex;
-Decomp_102D = runDecomp(X, opt_decomp, para);
+Decomp_102D = runDecomp(X(2:2:end,:), opt_decomp, para);
 
 % plotComp(1, Decomp_102D, opt_decomp, para)
 plotTonotopyWithComponents(1, Decomp_102D, T_102D, para)
@@ -272,10 +269,11 @@ end
 matched_comp = runMatchSubjects(Decomp_102D, Decomp_132D, opt_decomp, para_132D)
 
 %% get response profiles for components
-R = Decomp_102D.Rs{1};
+R = Decomp_102D.Rs{2};
 plot_on = 1;
 % [I_inorder, R_inorder, tags_inorder, snames_inorder] = getResponseProfile(R,plot_on);
-[I_inorder, R_inorder, tags_inorder, snames_inorder] = getResponseProfile_ModelMatch(R, plot_on); % need modification
+% [I_inorder, R_inorder, tags_inorder, snames_inorder] =...
+    getResponseProfile_ModelMatch(R, plot_on); % need modification
 
 % [I_inorder, R_inorder, tags_inorder, snames_inorder] = getResponseProfile_LZVoc_mix(R,plot_on);
 % [I_inorder, R_inorder, tags_inorder, snames_inorder] = getResponseProfile_LZVoc_major(R, plot_on);

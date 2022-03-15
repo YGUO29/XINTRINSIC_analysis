@@ -3,7 +3,9 @@ function getColorbar(Max,mode)
 fig1=figure; set(gcf, 'color','w')
 axis off
 % colormap(jet(100));
-colormap(flipud(gray(6)));
+% colormap(hsv(100));
+colormap(cbrewer('div','PRGn',256));
+% colormap(flipud(gray(6)));
 if length(Max) == 1
     a = [-Max Max];
 else 
@@ -23,6 +25,8 @@ caxis(a);
         'position',[0.2 0.2 0.5 0.1],...
         'FontSize',26,...
         'Ticklabels',{num2str(a(1), '%.1f'), num2str(a(2), '%.1f')});
+    
+        
     else
         disp('set mode as percent or number')
     end

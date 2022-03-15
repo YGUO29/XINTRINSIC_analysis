@@ -1,9 +1,13 @@
 % analysis for Ripple sounds (trial based)
 
 %% Calculate MTF matrix (nSM x nTM x nPix)
-S.sm            = [0, 1/8, 1/4, 1/2, 1, 2, 4, 8];
+% S.sm            = [0, 1/8, 1/4, 1/2, 1, 2, 4, 8];
+% S.tm            = [1/2, 1, 2, 4, 8, 16, 32, 64, 128];
+S.sm            = 2.^[-3:1:3]; % # = 8
+S.sm            = [0, S.sm];
+% S.tm            = 2.^[0, 1:0.5:7]; % # = 9
+
 S.tm            = [1/2, 1, 2, 4, 8, 16, 32, 64, 128];
-% S.tm            = [1/2, 1, 2, 4, 8, 16, 32, 64];
 S.tm            = [fliplr(-S.tm), 0, S.tm]; % all TM rates
 nSM = length(S.sm);
 nTM = length(S.tm);
@@ -23,7 +27,7 @@ end
 %     IndPix  = find(idx == kk);
 %     IndPix = 1:size(X,2);
 for kk = 1:nPix
-    order   = [nTM:-2:1,2:2:nTM-1]; % rearrange the order to align with sounds (in the experiments sound TM order is 0, 1/2, -1/2, ...)
+    order   = [nTM:-2:1, 2:2:nTM-1]; % rearrange the order to align with sounds (in the experiments sound TM order is 0, 1/2, -1/2, ...)
     data_temp   = X(:,kk); % select a pixel. rows of X: number of SM/TM parameters
     data_temp   = reshape(data_temp, nTM, nSM)'; % each column --> same SM --> transpose
     MTF(:,:,kk)  = data_temp;
@@ -51,7 +55,7 @@ bTM = zeros(1, nPix);
 bSM = bTM;
 for i = 1:nPix
     % reverse sign here for intrinsic!!
-    MTF_temp = - MTF(:,:,i);
+%     MTF_temp = - MTF(:,:,i);
     
     [row, col] = find(MTF_temp == max(MTF_temp(:)));
     

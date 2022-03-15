@@ -7,7 +7,7 @@ load(fullfile(path_mat,file_mat));clc
 % Sys = load(fullfile(path_mat,[nametemp(1:end-3),'.mat']));
 file_parts = strsplit(file_mat,{'_','.'});
 ind = find(strcmp(file_parts,'P1'));
-nametemp = strjoin(file_parts(1:ind-2),'_');
+nametemp = strjoin(file_parts(1:ind-1),'_');
 load(fullfile(path_mat,[nametemp,'.mat']));
 
 % I = double(imresize(I,1/16));
@@ -65,6 +65,7 @@ opt.ampLimit    = 0.05.*[-1, 1];
 opt.saveON      = 0; 
 opt.soundON     = 0;
 opt.mode        = 'allrep'; % avgrep (average repetitions) or allrep (concatenate repetitions)
+DataMat = double(DataMat);
 X = ViewData_raw(DataMat, para, opt);
      
 %% cycle-based tonotopy analysis
@@ -144,7 +145,7 @@ data_fftagl_one = squeeze(data_fftagl_mat(freq_comp,:));
 % data_fftagl_one = reshape(data_fftagl_one, nPix, 1);
 
 % Compensate the pseudo-delay
-hue     = mod(data_fftagl_one - (delay/period)*2*pi, 2*pi)./(2*pi);
+hue = mod(data_fftagl_one - (delay/period)*2*pi, 2*pi)./(2*pi);
 % Reverse the hue for DOWN cycle
 if strcmp(para.direction,'down')
     hue = 1 - hue;
@@ -183,7 +184,8 @@ if plotON
     
     % ========== plot average spectrum ==========
     subplot(2,4,5)
-    semilogx(f(2:end),data_fftamp_mean(2:end)), xlim([0 1])
+    semilogx(f(2:end),data_fftamp_mat(2:end,4603)), xlim([0 1])
+%     semilogx(f(2:end),data_fftamp_mean(2:end)), xlim([0 1])
     % label the frequency component looking at
     if para.tonotopy
         ind = floor(interp1(f,1:length(f),1/period));
@@ -269,7 +271,26 @@ map_temp(:,:,2) = saturation;
 figure, imagesc(map_temp), 
 axis image
      
+%%
+% get tonotopy contour
+M.saturation = sat_map; % used for masking
+M.hue = hue_map; % used for plotting contour
+% chose a map to overlay the contour on
+M.map_rgb = map_rgb;
+para.sat_lim = 0.05;
+% stimulus parameter for sound "TonePipSeq_A4-A10_73x0.2s(0.2s)@1.0st_(2.7+14.6+2.7)s"
+para.tone_dur       = 0.2;% duration of each tone
+para.num_per_oct 	= 12; % number of tones per octave
+para.tone_gap       = 2.7; % before and after tone pip sequence
+para.zindex = (para.tone_gap : para.num_per_oct*para.tone_dur: para.durStim - para.tone_gap)./...
+    (para.preStim + para.durStim + para.postStim);
+ct = getContour(M, para);
 
+figurex; 
+imagesc(M.map_rgb); 
+% imagesc(map_hue); 
+axis image, axis off
+plotContour(ct)
 %% Tonotopy map
 % -------------------
 % Xindong's code below 

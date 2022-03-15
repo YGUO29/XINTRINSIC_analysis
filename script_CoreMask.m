@@ -1,3 +1,5 @@
+% this script was used for separating core/non-core, and examine response
+% profiles for natural sounds
 
 %% get significantly activated area outline
 % load data in script_TrialBased first

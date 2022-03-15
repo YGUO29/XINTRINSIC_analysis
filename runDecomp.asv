@@ -51,11 +51,8 @@ if strcmp(opt.method, 'PCA')
 %             cutoff = 0.02;
             cutoff = mean(Ws{k}(i,:)) + 7*std(Ws{k}(i,:)); % variable cutoff values for each components
             comp_temp = zeros(para.height, para.width);
-            if isfield(para, 'ind_save')
-                comp_temp(para.ind_save) = Ws{k}(i,:);
-            else
-                comp_temp = Ws{k}(i,:);
-            end
+            if isfield(para, )
+            comp_temp(para.ind_save) = Ws{k}(i,:);
             % ============= plot components only =============
             %     mask_temp = double(~mask_outline_reg);
             %     mask_temp(mask_temp == 0) = -inf;
@@ -130,11 +127,7 @@ for k = 1:nK
 %             cutoff = 0.15;
             cutoff = mean(Ws{k}(ind(i),:)) + 7*std(Ws{k}(ind(i),:)); % variable cutoff values for each components
             comp_temp = zeros(para.height, para.width);
-            if isfield(para, 'ind_save')
-                comp_temp(para.ind_save) = Ws{k}(ind(i),:);
-            else
-                comp_temp = Ws{k}(ind(i),:);
-            end
+            comp_temp(para.ind_save) = Ws{k}(ind(i),:);
             % ============= plot components only =============
             %     mask_temp = double(~mask_outline_reg);
             %     mask_temp(mask_temp == 0) = -inf;

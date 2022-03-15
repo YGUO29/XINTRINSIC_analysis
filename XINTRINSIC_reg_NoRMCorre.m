@@ -42,7 +42,7 @@ else
     Zind = opt.ind_reg;
 end
 
-Y = single(Y);                 % convert to single precision 
+% Y = single(Y);                 % convert to single precision 
 Y = Y - min(Y(:));
 
 %% set parameters for rigid motion correction
@@ -114,6 +114,7 @@ mmY = quantile(Y(:),0.995);
 % [cM2,mM2,vM2] = motion_metrics(M2,10);
 T = length(cY);
 %% plot metrics
+if opt.plotON
 figure;
     ax1 = subplot(2,2,1); imagesc(mY,[nnY,mmY]);  axis equal; axis tight; axis off; title('mean raw data','fontsize',14,'fontweight','bold')
     ax2 = subplot(2,2,2); imagesc(mYreg,[nnY,mmY]);  axis equal; axis tight; axis off; title('mean rigid corrected','fontsize',14,'fontweight','bold')
@@ -124,6 +125,7 @@ figure;
 %     subplot(2,3,6); scatter(cYreg,cM2); hold on; plot([0.9*min(cY),1.05*max(cYreg)],[0.9*min(cY),1.05*max(cYreg)],'--r'); axis square;
 %         xlabel('rigid corrected','fontsize',14,'fontweight','bold'); ylabel('non-rigid corrected','fontsize',14,'fontweight','bold');
     linkaxes([ax1,ax2],'xy')
+end
 %% plot shifts        
 if strcmp(opt.mode, 'rigid')
     shifts_r = squeeze(cat(3,shifts1(:).shifts));
@@ -138,7 +140,7 @@ end
 % patch_id = 1:size(shifts_x,2);
 % str = strtrim(cellstr(int2str(patch_id.')));
 % str = cellfun(@(x) ['patch # ',x],str,'un',0);
-
+if opt.plotON
 figure;
     ax1 = subplot(311); plot(1:T,cY,1:T,cYreg); legend('raw data','rigid'); title('correlation coefficients','fontsize',14,'fontweight','bold')
             set(gca,'Xtick',[])
@@ -147,7 +149,7 @@ figure;
     ax3 = subplot(313); plot(shifts_r(:,2),'k','linewidth',2); title('displacements along y','fontsize',14,'fontweight','bold')
             xlabel('timestep','fontsize',14,'fontweight','bold')
     linkaxes([ax1,ax2,ax3],'x')
-
+end
 %% plot a movie with the results
 % figure;
 % for t = 1:1000
@@ -161,8 +163,8 @@ figure;
 % end
 
 %%
-if opt.regreps % register mean images of repetitions, skip DataMat step
-else
+if opt.regreps % register mean images of each repetition, skip DataMat step
+else % reconstruct DataMat
 %     DataMat_temp = reshape(Yreg_new, para.height, para.width, para.nFrame, para.nStim, length(opt.reps));
     DataMat_temp = reshape(Yreg, para.height, para.width, para.nFrame, para.nStim, length(opt.reps));
 %     [~,ind] = sort(para.order);
@@ -172,6 +174,7 @@ else
 end
 
 output.Yreg = Yreg;
+output.cY = cY;
 output.cYreg = cYreg;
 output.mYreg = mYreg;
 if strcmp(opt.mode, 'rigid')

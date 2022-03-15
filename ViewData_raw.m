@@ -30,9 +30,10 @@ X = X';
 
 %% save video, start a video writer object
 if opt.saveON
+    fnametemp = para.filename;
+    vnametemp = [cd,'\', para.filename(1:end-4), '.avi'];
     if opt.soundON % video with sound
-        fnametemp = para.filename;
-        vnametemp = [cd,'\', para.filename(1:end-4), '.avi'];
+        
         
         [file,path] = uigetfile('*.wav','Select the sound file','\\FANTASIA-DS3617\Test_Imaging\=Sounds=');
         [sounddata,fs] = audioread(fullfile(path,file)); 
@@ -58,9 +59,9 @@ end
     figurex,
     % display the averaged reponse first
     h = imagesc(mean(mov_rel,3),opt.ampLimit); 
-%     colormap('jet'); colorbar; 
-    CT = cbrewer('div', 'RdBu', 255);
-    colormap(CT); colorbar
+    colormap('jet'); colorbar; 
+%     CT = cbrewer('div', 'RdBu', 255);
+%     colormap(CT); colorbar
     axis image
     pause
     for i = 1:para.nFrame

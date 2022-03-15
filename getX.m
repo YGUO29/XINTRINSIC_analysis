@@ -21,12 +21,12 @@ nPanels = length(opt.trials);
 img_rel = zeros(nPanels, para.height, para.width);
 mov_rel = zeros(nPanels, para.height, para.width, para.nFrame);
 mov_rel_sep = zeros(length(opt.reps), nPanels,para.height,para.width,para.nFrame);
-X = zeros(nPanels,para.width*para.height);
+X = zeros(nPanels, para.width*para.height);
 
 % reps = 1:para.nRep;
 for i = 1:nPanels
     iTrial = opt.trials(i);
-    mov = DataMat(opt.reps,iTrial,:,:,:);
+    mov = DataMat(opt.reps, iTrial, :,:,:);
     % for each repetition
     for j = 1:length(opt.reps)
         iRep = opt.reps(j);
@@ -48,5 +48,6 @@ for i = 1:nPanels
 
 end
 X = reshape(img_rel, nPanels, para.width*para.height);
-
+% X_sep = squeeze(mean(mov_rel_sep(:,:,:,:,floor(para.preStim*para.fr) : floor((para.preStim+para.durStim)*para.fr)),5));
+% X_sep = reshape(X_sep, para.nRep, para.nStim, para.height*para.width); 
 end

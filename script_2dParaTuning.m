@@ -2,37 +2,50 @@
 %% Parameters for frequency-level tuning
 global D
 
-octaves = 0:1/12:(8+1/4); % one semitone apart
+% octaves = 0:1/12:(8+1/4); % one semitone apart, 100 tones
+octaves = 0:1:8;
 freqs = 110.*2.^octaves;
 % Feature 1 changes first
 D.F1 = freqs;
-D.F2 = 0:10:80;
-D.F2 = fliplr(D.F2);
+D.F1_order = 1:length(D.F1);
+D.F1_name = 'Frequency (Hz)';
+% D.F2 = 0:10:80;
+D.F2 = 80:-10:-20;
+D.F2_order = 1:length(D.F2);
+D.F2_name = 'Sound Level (dB SPL)';
+
 D.fluo = 1;
 
-D.Titles{'Best Frequencies', 'Best Sound Level'};
-D.ticks{1} = 0:8;
+D.Titles = {'Best Frequencies', 'Best Sound Level'};
+D.ticks{1} = 1:length(D.F1);
 D.ticklabels{1} = {'A2', 'A3', 'A4', 'A5', 'A6', 'A7', 'A8', 'A9', 'A10'};
-% plot_opt.ticks{2} = 0:8;
-% plot_opt.ticklabels{2} = {'A2', 'A3', 'A4', 'A5', 'A6', 'A7', 'A8', 'A9', 'A10'};
+D.ticks{2} = 1:length(D.F2);
+D.ticklabels{2} = arrayfun(@num2str, D.F2 ,'UniformOutput',false);
 %% Parameters for MTF
+D.fluo        = 0;
+
 % F1 = TM, which changes first
-D.F1            = [1/2, 1, 2, 4, 8, 16, 32, 64, 128]; 
-% D.F1          = [1/2, 1, 2, 4, 8, 16, 32, 64]; 
+% D.F1            = [1/2, 1, 2, 4, 8, 16, 32, 64, 128]; 
+D.F1          = [1/2, 1, 2, 4, 8, 16, 32, 64]; 
+% D.F1            = 2.^[0, 1:0.5:7];
+
 D.F1          = [fliplr(-D.F1), 0, D.F1]; % all TM rates
 D.F1_order    = [length(D.F1):-2:1,2:2:length(D.F1)-1]; 
+% D.F1_order    = 1:length(D.F1);
 D.F2          = [0, 1/8, 1/4, 1/2, 1, 2, 4, 8];
+% D.F2          = 2.^[-3:0.5:3]; D.F2 = [0, D.F2];
 D.F2_order    = 1:length(D.F2);
-D.fluo        = 1;
 
 D.Titles = {'Best temporal modulation', 'Best spectral modulation'};
-D.ticks{1} = 1:2:length(S.tm);
+D.ticks{1} = 1:2:length(D.F1);
 D.ticklabels{1} = arrayfun(@num2str,D.F1(1:2:end),'UniformOutput',false);
-D.ticks{2} = 1:length(S.sm);
+D.ticks{2} = 1:length(D.F2);
 D.ticklabels{2} = arrayfun(@num2str,D.F2,'UniformOutput',false);
 
 
-%%
+%% re-arrange X to construct response map map (RMap) of #F1 x #F2 x #Pix
+% provided X, and F1, F2
+
 D.nF1 = length(D.F1);
 D.nF2 = length(D.F2);
 nPix = size(X,2);
@@ -58,48 +71,66 @@ RMap_mean = mean(D.RMap,3);
 if D.fluo
     X_maxproj = reshape(max(X, [], 1), para.height, para.width);
 else
-     X_maxproj = reshape(max(-X, [], 1), para.height, para.width);
+    X_maxproj = reshape(max(-X, [], 1), para.height, para.width);
 end
 %% get best F1 and F2
+mode = 2;
+% 1: winner take all
+% 2: take marginal first, then winner take all
+% 3: take marginal first, then weighted average
 bF1 = zeros(1, nPix);
 bF2 = bF1;
 for i = 1:nPix
     RMap_temp = D.RMap(:,:,i);
-    % winner takes all
-    [row, col] = find(RMap_temp == max(RMap_temp(:)));    
-    % marginal + winner takes all
-%     mF1 = mean(RMap_temp,1); % marginal tuning for F1
-%     [~, col] = max(mF1);
-%     mF2 = mean(RMap_temp,2); % marginal tuning for F2
-%     [~, row] = max(mF2);
+    
+    switch mode
+        case 1 % winner takes all
+        [row, col] = find(RMap_temp == max(RMap_temp(:)));   
+        if length(row) > 1 || length(col) > 1
+            bF1(i) = NaN;
+            bF2(i) = NaN;
+        else
+            bF1(i) = col;
+            bF2(i) = row;
+        end
+        
+        case 2 % marginal + winner takes all
+        mF1 = mean(RMap_temp,1); % marginal tuning for F1
+        [~, col] = max(mF1);
+        mF2 = mean(RMap_temp,2); % marginal tuning for F2
+        [~, row] = max(mF2);
 
-    if length(row) > 1 || length(col) > 1
-        bF1(i) = NaN;
-        bF2(i) = NaN;
-    else
-        bF1(i) = col;
-        bF2(i) = row;
+        if length(row) > 1 || length(col) > 1
+            bF1(i) = NaN;
+            bF2(i) = NaN;
+        else
+            bF1(i) = col;
+            bF2(i) = row;
+        end
+
+        case 3 % marginal + weighted average
+        mF1 = mean(RMap_temp,1); % marginal tuning for F1
+        mF1(mF1<0) = 0;
+        weights = mF1./sum(mF1);
+    %     bF1(i) = F1*weights;
+        bF1(i) = (1:D.nF1)*weights';
+
+        mF2 = mean(RMap_temp,2); % marginal tuning for F2
+        mF2(mF2<0) = 0;
+        weights = mF2./sum(mF2);
+    %     bF2(i) = F2*weights';
+        bF2(i) = (1:D.nF2)*weights;
+        
+        otherwise
     end
-
-    % marginal + weighted average
-%     mF1 = mean(RMap_temp,1); % marginal tuning for F1
-%     mF1(mF1<0) = 0;
-%     weights = mF1./sum(mF1);
-% %     bF1(i) = F1*weights;
-%     bF1(i) = (1:D.nF1)*weights';
-%     
-%     mF2 = mean(RMap_temp,2); % marginal tuning for F2
-%     mF2(mF2<0) = 0;
-%     weights = mF2./sum(mF2);
-% %     bF2(i) = F2*weights';
-%     bF2(i) = (1:D.nF2)*weights;
 end
 bF1 = reshape(bF1, para.height, para.width);
 bF2 = reshape(bF2, para.height, para.width);
 %% plot bF1 and bF2 maps (without amplitude weighting)
+mirror = 1;
+
 figurex;
 imagesc(bF1), axis image, colorbar
-% imagesc(log2(bF1./110)), axis image, colorbar
 % colormap(jet(D.nF1)), 
 % colormap(parula(D.nF1))
 CT = cbrewer('div','RdBu',D.nF1); colormap(CT)
@@ -107,10 +138,15 @@ caxis([0 D.nF1])
 colorbar('Ticks',D.ticks{1},...
          'TickLabels',D.ticklabels{1});
 title(D.Titles{1})
+if mirror
+    set(gca,'XDir','reverse') 
+end
 
 % ==== unify positive and negative TMs ====
 figurex;
-bF1(bF1<9) = 18 - bF1((bF1<9));
+if min(bF1(:))<8 % if haven't converted best temp to all positive numbers
+    bF1(bF1<9) = 18 - bF1((bF1<9)); % ONLY RUN THIS LINE ONCE!!
+end
 imagesc(bF1), axis image, colorbar
 % imagesc(log2(bF1./110)), axis image, colorbar
 % colormap(jet(D.nF1)), 
@@ -119,6 +155,11 @@ caxis([floor(D.nF1/2) D.nF1])
 colorbar('Ticks',D.ticks{1},...
          'TickLabels',D.ticklabels{1});
 title(D.Titles{1})
+plotContour(ct)
+if mirror
+    set(gca,'XDir','reverse') 
+end
+
 
 figurex;
 imagesc(bF2), axis image, colorbar
@@ -128,37 +169,57 @@ caxis([0,D.nF2]);
 colorbar('Ticks',D.ticks{2},...
          'TickLabels',D.ticklabels{2});
 title(D.Titles{2})
+plotContour(ct)
+if mirror
+    set(gca,'XDir','reverse') 
+end
+
 %% plot bF1 and bF2 maps (with amplitude weighting)
+mirror = 0;
+
 bF1(isnan(bF1)) = 1;
 bF2(isnan(bF2)) = 1;
 
 figurex;
 CT = cbrewer('div','RdBu',D.nF1); 
+% CT = colormap(hsv(D.nF1));
 img = CT(bF1,:); img = reshape(img, para.height, para.width, 3);
 img = img.*repmat(rescale(X_maxproj, 0.2, 1), 1, 1, 3);
-
 imagesc(img), axis image, colormap(CT), colorbar
 caxis([0 D.nF1])
 colorbar('Ticks',D.ticks{1},...
          'TickLabels',D.ticklabels{1});
 title(D.Titles{1})
+axis off
+if mirror
+    set(gca,'XDir','reverse') 
+end
+plotContour(ct)
+
 
 % ==== unify positive and negative TMs ====
 figurex;
-bF1(bF1<D.nF1/2) = D.nF1 + 1 - bF1((bF1<D.nF1/2));
-bF1 = bF1 - floor(D.nF1/2);
-CT = colormap(parula((D.nF1+1)/2));
+if max(bF1(:)) > D.nF1/2+1 % if haven't converted best temp to all positive numbers
+    bF1(bF1<D.nF1/2) = D.nF1 + 1 - bF1((bF1<D.nF1/2));
+    bF1 = bF1 - floor(D.nF1/2);
+end
+CT = colormap(jet((D.nF1+1)/2));
 img = CT(bF1,:); img = reshape(img, para.height, para.width, 3);
 img = img.*repmat(rescale(X_maxproj, 0.2, 1), 1, 1, 3);
-
 imagesc(img), axis image, colormap(CT), colorbar
 caxis([floor(D.nF1/2) D.nF1])
 colorbar('Ticks',D.ticks{1},...
          'TickLabels',D.ticklabels{1});
 title(D.Titles{1})
+axis off
+if mirror
+    set(gca,'XDir','reverse') 
+end
+plotContour(ct)
+
 
 figurex;
-CT = (parula(D.nF2));
+CT = (jet(D.nF2));
 img = CT(bF2,:); img = reshape(img, para.height, para.width, 3);
 img = img.*repmat(rescale(X_maxproj, 0.2, 1), 1, 1, 3);
 imagesc(img), axis image, colormap(CT), colorbar
@@ -166,6 +227,11 @@ caxis([0,D.nF2]);
 colorbar('Ticks',D.ticks{2},...
          'TickLabels',D.ticklabels{2});
 title(D.Titles{2})
+axis off
+if mirror
+    set(gca,'XDir','reverse') 
+end
+plotContour(ct)
 
 
 %% fit tuning curves with Gaussian
@@ -203,7 +269,7 @@ for i = 1:nPix
 end
 %%
 figurex;
-img = D.fit_para{2}(:,4);
+img = D.fit_para{1}(:,4);
 % lm = 0; img(img<lm) = lm; 
 % um = 8; img(img>um) = um;
 imagesc(reshape(img, para.height, para.width)), axis image

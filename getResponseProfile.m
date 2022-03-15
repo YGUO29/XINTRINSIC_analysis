@@ -1,6 +1,7 @@
 function [I_inorder, R_inorder, tags_inorder, snames_inorder] = getResponseProfile(R,plot_on)
 % filelist = dir('\\10.16.58.229\Test_Procedures\==Slides & Documents\Music\naturalsounds165\naturalsounds165')
 folder_origin = 'D:\SynologyDrive\=code=\McdermottLab\sound_natural';
+% folder_origin = 'D:\SynologyDrive\=sounds=\Natural sound\Natural_RS-PNAS_168';
 list = dir(fullfile(folder_origin,'*.wav'));
 snames = natsortfiles({list.name})';
 

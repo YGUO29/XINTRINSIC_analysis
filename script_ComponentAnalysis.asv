@@ -1,8 +1,12 @@
 % Component analysis including reliability analysis
 
 %% ============= Reliability test 1, select Perc of the trials/reps ==========
+
+% change number of reps
+Reps = 1:4;
+W2 = cell(length(Reps), nRep);
 %% 
-reduced_variable = 'trial'; % rep or trial
+reduced_variable = 'rep'; % rep or trial
 % Reps_temp = zeros(nRep, 4);
 % for i = 1:nRep
 %   Reps_temp(i,:) =  datasample(1:para.nRep, 4, 'replace',false);
@@ -18,24 +22,23 @@ elseif strcmp(reduced_variable, 'rep')
 else
 end
 nIter = 5;
-% W2 = cell(length(rv), nIter);
+W2 = cell(length(rv), nIter);
 % for i = length(Reps)
-for i = 1
+for i = 1:length(rv)
     for k = 1:nIter % repeat for nRep times
         if strcmp(reduced_variable,'trial')
             trials =    datasample(1:para.nStim,round(rv(i)*para.nStim),'replace',false); 
-            trials = sort(trials,'ascend');
     %         opt.reps        = Reps_temp(k,:);
     %         opt.reps = datasample(1:para.nRep, Reps(i), 'replace',false)
             X_temp = squeeze( mean(X_sep(:, trials, :), 1) );        
-            disp(['ReducedVariable=',num2str(i),', Iter=',num2str(k),' Selected ',num2str(round(rv(i)*para.nStim)),' trials'])
+            disp(['Perc=',num2str(i),', Iter=',num2str(k),' Selected ',num2str(round(rv(i)*para.nStim)),' trials'])
 
         elseif strcmp(reduced_variable, 'rep')
             reps =    datasample(1:para.nRep, round(rv(i)*para.nRep), 'replace',false); 
 %         opt.reps        = Reps_temp(k,:);
 %         opt.reps = datasample(1:para.nRep, Reps(i), 'replace',false)
             X_temp = squeeze( mean(X_sep(reps, :, :), 1) );
-            disp(['ReducedVariable=',num2str(i),', Iter=',num2str(k),' Selected ',num2str(round(rv(i)*para.nRep)),' repetitions'])
+            disp(['Perc=',num2str(i),', Iter=',num2str(k),' Selected ',num2str(round(rv(i)*para.nRep)),' repetitions'])
 
         else
             disp('set reduced_variable as rep or trial')
@@ -106,7 +109,7 @@ elseif strcmp(reduced_variable,'rep')
     errorbar(xx, yy, ee,'linewidth',2, 'Color', 'k')
     xlabel('Number of repetitions selected')
     ylabel('Mean Euclidean distance of components')
-    xlim([2 para.nRep-2])
+    xlim([0 para.nRep])
 end
 hold on, plot([min(xx), max(xx)], ...
     (min(yy)+max(yy))./2.*ones(1,2), ...
@@ -120,8 +123,8 @@ interp1(yy, xx, (min(yy)+max(yy))./2)
 %% plot new components with a certain Perc number
 
 for i = 1:nIter
-W_temp = W2{8, i};
-W_temp = W_temp(result.ind{8,i},:);
+W_temp = W2{7, i};
+W_temp = W_temp(result.ind{7,i},:);
 
 comp_temp = [];
 figurex([1073         539         560          64]);

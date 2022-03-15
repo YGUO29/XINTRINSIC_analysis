@@ -1,4 +1,4 @@
-% script for clustering
+% script for clustering for responses to vocalizations
 % X: 1 row = 1 observation
 
 %% Select part of X to do clustering
